@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import ThemeToggle from '@/components/theme/ThemeToggle'
 
 export default async function Home() {
   const supabase = await createClient()
@@ -14,7 +15,10 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4 relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="max-w-4xl text-center space-y-8">
         <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white">
           Personal Finance Advisor
