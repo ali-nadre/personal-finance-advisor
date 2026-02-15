@@ -89,28 +89,30 @@ export async function getHouseholdById(
     return { error: householdError.message }
   }
 
-  // Get members with user details
+  // Get members (simplified - just IDs for now)
   const { data: members, error: membersError } = await supabase
     .from('household_members')
-    .select(
-      `
-      *,
-      user:user_id (
-        email,
-        user_metadata
-      )
-    `
-    )
+    .select('*')
     .eq('household_id', householdId)
 
   if (membersError) {
     return { error: membersError.message }
   }
 
+  // For MVP: Create members with placeholder user data
+  // TODO: Create a users table or use Supabase auth API properly
+  const membersWithUsers = (members || []).map((member) => ({
+    ...member,
+    user: {
+      email: member.user_id, // Show user ID as email for now
+      user_metadata: { full_name: 'Member' },
+    },
+  }))
+
   return {
     data: {
       ...household,
-      members: members || [],
+      members: membersWithUsers,
     } as HouseholdWithMembers,
   }
 }
