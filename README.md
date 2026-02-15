@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Personal Finance Advisor
+
+A household budget management and financial advisory application. Track incomes, expenses, and get personalized financial guidance based on your financial health.
+
+## Features
+
+**Phase 1 (Current):**
+- 🔐 Multi-provider authentication (Email, Google, Facebook)
+- 🏠 Household management with member permissions (read/write)
+- 💰 Budget tracking (incomes & expenses)
+- 📊 Category-based organization
+- 📅 Time granularity (monthly, quarterly, yearly)
+
+**Upcoming Phases:**
+- Financial advisor with ranking and personalized advice
+- Investment data integration
+- Dashboard visualizations
+- Mobile app (React Native)
+
+## Tech Stack
+
+- **Frontend:** Next.js 14 (App Router) + TypeScript + Tailwind CSS
+- **Backend:** Supabase (PostgreSQL + Auth + Real-time)
+- **Deployment:** Vercel
+- **CI/CD:** GitHub Actions
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ and npm
+- Supabase account (free tier works)
+- GitHub account
+- Vercel account (for deployment)
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/YOUR_USERNAME/personal-finance-advisor.git
+cd personal-finance-advisor
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Edit `.env.local` with your Supabase credentials:
+- `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+- `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key (for admin operations)
 
-## Learn More
+4. Run the development server:
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Development Workflow
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+This project uses a feature-branch workflow with PRs:
 
-## Deploy on Vercel
+1. Create a feature branch: `git checkout -b feature/your-feature-name`
+2. Make changes and commit: `git commit -m "feat: your feature description"`
+3. Push to GitHub: `git push origin feature/your-feature-name`
+4. Create a Pull Request on GitHub
+5. CI runs automatically (lint, type-check, build)
+6. Merge to `main` → auto-deploys to Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+├── app/                  # Next.js App Router
+│   ├── (auth)/          # Auth-related pages
+│   ├── (dashboard)/     # Protected dashboard pages
+│   ├── api/             # API routes
+│   └── layout.tsx       # Root layout
+├── components/          # Reusable React components
+├── lib/                 # Utilities and configurations
+│   ├── supabase/        # Supabase client setup
+│   └── utils/           # Helper functions
+├── public/              # Static assets
+└── types/               # TypeScript type definitions
+```
+
+## Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run type-check` - Run TypeScript compiler check
+
+## Contributing
+
+This is a personal project, but feedback is welcome! Feel free to open issues or submit PRs.
+
+## License
+
+MIT
+
+---
+
+Built with ❤️ using Next.js, Supabase, and TypeScript
