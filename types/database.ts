@@ -1,8 +1,14 @@
 export type Permission = 'read' | 'write'
 
+export type Currency =
+  | 'USD' | 'EUR' | 'GBP' | 'JPY' | 'CNY' | 'AUD' | 'CAD' | 'CHF' | 'SEK' | 'NZD'
+  | 'INR' | 'BRL' | 'ZAR' | 'MXN' | 'SGD' | 'HKD' | 'NOK' | 'KRW' | 'TRY' | 'RUB'
+  | 'AED' | 'SAR' | 'EGP' | 'MAD' | 'NGN' | 'KES' | 'GHS' | 'TZS' | 'UGX' | 'DZD'
+
 export interface Household {
   id: string
   name: string
+  currency: Currency
   created_by: string
   created_at: string
   updated_at: string
@@ -30,11 +36,13 @@ export interface HouseholdWithMembers extends Household {
 
 export interface CreateHouseholdInput {
   name: string
+  currency?: Currency
 }
 
 export interface UpdateHouseholdInput {
   id: string
   name: string
+  currency?: Currency
 }
 
 export interface AddMemberInput {

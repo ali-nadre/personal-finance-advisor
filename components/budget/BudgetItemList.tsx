@@ -1,26 +1,21 @@
 'use client'
 
-import type { BudgetItemWithCategory, Category } from '@/types/database'
+import type { BudgetItemWithCategory, Category, Currency } from '@/types/database'
 import { deleteBudgetItem } from '@/app/actions/budgets'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { formatCurrency } from '@/lib/currency'
 
 interface Props {
   items: BudgetItemWithCategory[]
   categories: Category[]
   householdId: string
+  currency?: Currency
 }
 
-export default function BudgetItemList({ items, categories, householdId }: Props) {
+export default function BudgetItemList({ items, categories, householdId, currency = 'USD' }: Props) {
   const router = useRouter()
   const [deletingId, setDeletingId] = useState<string | null>(null)
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount)
-  }
 
   const handleDelete = async (itemId: string) => {
     if (!confirm('Are you sure you want to delete this budget item?')) {
@@ -72,7 +67,7 @@ export default function BudgetItemList({ items, categories, householdId }: Props
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <div className="text-lg font-bold text-gray-900">
-                      {formatCurrency(item.amount)}
+                      {formatCurrency(item.amount, currency)}
                     </div>
                     <div className="text-xs text-gray-500">
                       per {item.frequency === 'monthly' ? 'month' : item.frequency === 'quarterly' ? 'quarter' : 'year'}

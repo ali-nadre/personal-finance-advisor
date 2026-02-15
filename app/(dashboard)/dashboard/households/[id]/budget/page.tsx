@@ -45,13 +45,14 @@ export default async function BudgetPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
-      {summary && <BudgetSummary summary={summary} />}
+      {summary && <BudgetSummary summary={summary} currency={household.currency} />}
 
       {categories && categories.length > 0 ? (
         <BudgetItemList
           items={budgetItems || []}
           categories={categories}
           householdId={id}
+          currency={household.currency}
         />
       ) : (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
