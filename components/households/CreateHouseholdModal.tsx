@@ -2,6 +2,8 @@
 
 import { createHousehold } from '@/app/actions/households'
 import { useState } from 'react'
+import { CURRENCIES } from '@/lib/currency'
+import type { Currency } from '@/types/database'
 
 export default function CreateHouseholdModal({
   isOpen,
@@ -11,6 +13,7 @@ export default function CreateHouseholdModal({
   onClose: () => void
 }) {
   const [name, setName] = useState('')
+  const [currency, setCurrency] = useState<Currency>('USD')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -19,13 +22,14 @@ export default function CreateHouseholdModal({
     setLoading(true)
     setError(null)
 
-    const result = await createHousehold({ name })
+    const result = await createHousehold({ name, currency })
 
     if (result.error) {
       setError(result.error)
       setLoading(false)
     } else {
       setName('')
+      setCurrency('USD')
       onClose()
       setLoading(false)
     }
@@ -79,6 +83,24 @@ export default function CreateHouseholdModal({
               placeholder="e.g., Smith Family Budget"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          <div>
+            <label htmlFor="currency" className="block text-sm font-medium mb-1">
+              Currency
+            </label>
+            <select
+              id="currency"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as Currency)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {CURRENCIES.map((curr) => (
+                <option key={curr.code} value={curr.code}>
+                  {curr.symbol} - {curr.name} ({curr.code})
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex gap-3 pt-2">

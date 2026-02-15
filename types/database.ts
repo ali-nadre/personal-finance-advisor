@@ -1,8 +1,14 @@
 export type Permission = 'read' | 'write'
 
+export type Currency =
+  | 'USD' | 'EUR' | 'GBP' | 'JPY' | 'CNY' | 'AUD' | 'CAD' | 'CHF' | 'SEK' | 'NZD'
+  | 'INR' | 'BRL' | 'ZAR' | 'MXN' | 'SGD' | 'HKD' | 'NOK' | 'KRW' | 'TRY' | 'RUB'
+  | 'AED' | 'SAR' | 'EGP' | 'MAD' | 'NGN' | 'KES' | 'GHS' | 'TZS' | 'UGX' | 'DZD'
+
 export interface Household {
   id: string
   name: string
+  currency: Currency
   created_by: string
   created_at: string
   updated_at: string
@@ -30,11 +36,13 @@ export interface HouseholdWithMembers extends Household {
 
 export interface CreateHouseholdInput {
   name: string
+  currency?: Currency
 }
 
 export interface UpdateHouseholdInput {
   id: string
   name: string
+  currency?: Currency
 }
 
 export interface AddMemberInput {
@@ -46,4 +54,66 @@ export interface AddMemberInput {
 export interface UpdateMemberPermissionInput {
   member_id: string
   permission: Permission
+}
+
+// Budget types
+export type CategoryType = 'income' | 'expense'
+export type Frequency = 'monthly' | 'quarterly' | 'yearly'
+
+export interface Category {
+  id: string
+  household_id: string
+  name: string
+  type: CategoryType
+  icon: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface BudgetItem {
+  id: string
+  household_id: string
+  category_id: string
+  amount: number
+  frequency: Frequency
+  year: number
+  description: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface BudgetItemWithCategory extends BudgetItem {
+  category: Category
+}
+
+export interface CreateCategoryInput {
+  household_id: string
+  name: string
+  type: CategoryType
+  icon?: string
+}
+
+export interface UpdateCategoryInput {
+  id: string
+  name: string
+  icon?: string
+}
+
+export interface CreateBudgetItemInput {
+  household_id: string
+  category_id: string
+  amount: number
+  frequency: Frequency
+  year: number
+  description?: string
+}
+
+export interface UpdateBudgetItemInput {
+  id: string
+  category_id?: string
+  amount?: number
+  frequency?: Frequency
+  year?: number
+  description?: string
 }

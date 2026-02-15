@@ -26,6 +26,7 @@ export async function createHousehold(input: CreateHouseholdInput) {
     .from('households')
     .insert({
       name: input.name,
+      currency: input.currency || 'USD',
       created_by: user.id,
     })
     .select()
@@ -128,9 +129,14 @@ export async function updateHousehold(input: UpdateHouseholdInput) {
     return { error: 'Not authenticated' }
   }
 
+  const updateData: any = { name: input.name }
+  if (input.currency !== undefined) {
+    updateData.currency = input.currency
+  }
+
   const { data, error } = await supabase
     .from('households')
-    .update({ name: input.name })
+    .update(updateData)
     .eq('id', input.id)
     .select()
     .single()
