@@ -2,8 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { getUserHouseholds } from '@/app/actions/households'
 import { getHealthScore } from '@/app/actions/healthScore'
 import { getMonthlyTransactionSummary } from '@/app/actions/transactions'
+import { getInsights, refreshInsights } from '@/app/actions/advisor'
 import { formatCurrency } from '@/lib/currency'
 import HealthScoreCard from '@/components/dashboard/HealthScoreCard'
+import InsightsFeed from '@/components/advisor/InsightsFeed'
 import Link from 'next/link'
 
 export default async function DashboardPage() {
@@ -15,11 +17,16 @@ export default async function DashboardPage() {
 
   const { data: households } = await getUserHouseholds()
 
-  // Load health score + monthly summary for the first household
+  // Load health score + monthly summary + insights for the first household
   const primaryHousehold = households?.[0] ?? null
   const now = new Date()
 
-  const [healthScoreResult, monthlySummaryResult] = primaryHousehold
+  // Refresh insights in background before fetching
+  if (primaryHousehold) {
+    await refreshInsights(primaryHousehold.id)
+  }
+
+  const [healthScoreResult, monthlySummaryResult, insightsResult] = primaryHousehold
     ? await Promise.all([
         getHealthScore(primaryHousehold.id),
         getMonthlyTransactionSummary(
@@ -27,11 +34,13 @@ export default async function DashboardPage() {
           now.getFullYear(),
           now.getMonth() + 1
         ),
+        getInsights(primaryHousehold.id),
       ])
-    : [{ data: null }, { data: null }]
+    : [{ data: null }, { data: null }, { data: null }]
 
   const healthScore = healthScoreResult.data
   const monthlySummary = monthlySummaryResult.data
+  const insights = insightsResult.data ?? []
   const monthName = now.toLocaleDateString('en-US', { month: 'long' })
 
   return (
@@ -131,10 +140,32 @@ export default async function DashboardPage() {
                   >
                     <span>💳</span> Transactions
                   </Link>
+                  <Link
+                    href={`/dashboard/households/${primaryHousehold.id}/advisor`}
+                    className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-2 py-1.5 transition"
+                  >
+                    <span>🤖</span> Advisor
+                  </Link>
                 </div>
               )}
             </div>
           </div>
+
+          {/* Insights feed */}
+          {insights.length > 0 && primaryHousehold && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold text-gray-900">Advisor Insights</h3>
+                <Link
+                  href={`/dashboard/households/${primaryHousehold.id}/advisor`}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  View all →
+                </Link>
+              </div>
+              <InsightsFeed insights={insights} householdId={primaryHousehold.id} compact />
+            </div>
+          )}
 
           {/* Households list (if multiple) */}
           {households.length > 1 && (
