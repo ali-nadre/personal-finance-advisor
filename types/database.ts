@@ -117,3 +117,61 @@ export interface UpdateBudgetItemInput {
   year?: number
   description?: string
 }
+
+// Transaction types
+export interface Transaction {
+  id: string
+  household_id: string
+  category_id: string
+  amount: number
+  type: CategoryType
+  description: string | null
+  transaction_date: string
+  is_recurring: boolean
+  recurring_item_id: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface TransactionWithCategory extends Transaction {
+  category: Category
+}
+
+export interface CreateTransactionInput {
+  household_id: string
+  category_id: string
+  amount: number
+  type: CategoryType
+  description?: string
+  transaction_date?: string
+  is_recurring?: boolean
+  recurring_item_id?: string
+}
+
+export interface UpdateTransactionInput {
+  id: string
+  category_id?: string
+  amount?: number
+  type?: CategoryType
+  description?: string
+  transaction_date?: string
+  is_recurring?: boolean
+}
+
+export interface TransactionFilters {
+  type?: CategoryType
+  category_id?: string
+  date_from?: string
+  date_to?: string
+}
+
+export interface BudgetVsActual {
+  categoryId: string
+  categoryName: string
+  categoryType: CategoryType
+  budgeted: number
+  actual: number
+  difference: number
+  percentUsed: number
+}
