@@ -115,6 +115,19 @@ export async function addScenarioItem(input: AddScenarioItemInput) {
   return { data: data as ScenarioItem, error: null }
 }
 
+export async function updateScenarioItem(
+  itemId: string,
+  label: string,
+  monthly_amount: number
+) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('scenario_items')
+    .update({ label, monthly_amount })
+    .eq('id', itemId)
+  return { error: error?.message ?? null }
+}
+
 export async function deleteScenarioItem(itemId: string) {
   const supabase = await createClient()
   const { error } = await supabase.from('scenario_items').delete().eq('id', itemId)
