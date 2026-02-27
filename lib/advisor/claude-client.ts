@@ -5,17 +5,12 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 
-let _client: Anthropic | null = null
-
 function getClient(): Anthropic {
-  if (!_client) {
-    const apiKey = process.env.ANTHROPIC_API_KEY
-    if (!apiKey) {
-      throw new Error('ANTHROPIC_API_KEY is not set in environment variables')
-    }
-    _client = new Anthropic({ apiKey })
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY is not set')
   }
-  return _client
+  return new Anthropic({ apiKey })
 }
 
 export interface ChatMessage {

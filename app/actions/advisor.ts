@@ -214,7 +214,9 @@ export async function sendMessage(
   try {
     response = await chatWithAdvisor(systemPrompt, chatHistory, userMessage)
   } catch (err) {
-    return { data: null, error: 'AI advisor unavailable. Please try again later.' }
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    console.error('[Advisor] Claude API error:', message)
+    return { data: null, error: `AI advisor error: ${message}` }
   }
 
   // Persist both messages
