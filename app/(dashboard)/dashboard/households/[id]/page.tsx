@@ -31,13 +31,13 @@ export default async function HouseholdPage({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-blue-800 mb-3">
-            Plan your income and expenses with budgets.
+            Plan your income and expenses, and track where your money goes.
           </p>
           <Link
             href={`/dashboard/households/${id}/budget`}
             className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
           >
-            Go to Budget
+            Cash Flow
           </Link>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">

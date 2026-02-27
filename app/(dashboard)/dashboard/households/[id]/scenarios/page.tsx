@@ -75,12 +75,37 @@ export default async function ScenariosPage({ params }: { params: Promise<{ id: 
         </div>
       )}
 
-      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-1">How scenarios work</h3>
-        <p className="text-sm text-gray-500">
-          Each scenario has its own income and expense lines. Adjust them to model a change, then compare the projected savings curve against your current budget.
-          {!hasBudget && ' Set up your budget first to use the "clone from budget" option.'}
-        </p>
+      {/* How-it-works explainer */}
+      <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6">
+        <h3 className="text-base font-semibold text-blue-900 mb-3">How scenarios work</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex gap-3">
+            <div className="w-7 h-7 rounded-full bg-blue-200 text-blue-800 font-bold text-sm flex items-center justify-center flex-shrink-0 mt-0.5">1</div>
+            <div>
+              <p className="text-sm font-semibold text-blue-800 mb-0.5">Pick a "what if"</p>
+              <p className="text-sm text-blue-700">New job, moving city, having a baby, paying off debt — any life change that affects your money.</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="w-7 h-7 rounded-full bg-blue-200 text-blue-800 font-bold text-sm flex items-center justify-center flex-shrink-0 mt-0.5">2</div>
+            <div>
+              <p className="text-sm font-semibold text-blue-800 mb-0.5">Adjust income & expenses</p>
+              <p className="text-sm text-blue-700">Add or tweak monthly income and expense lines. Start from scratch or clone your current budget as a baseline.</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="w-7 h-7 rounded-full bg-blue-200 text-blue-800 font-bold text-sm flex items-center justify-center flex-shrink-0 mt-0.5">3</div>
+            <div>
+              <p className="text-sm font-semibold text-blue-800 mb-0.5">See the long-term impact</p>
+              <p className="text-sm text-blue-700">Drag the timeline slider from 1 to 20 years. See cumulative savings vs your current budget side by side.</p>
+            </div>
+          </div>
+        </div>
+        {!hasBudget && (
+          <p className="text-xs text-blue-600 mt-3 border-t border-blue-200 pt-3">
+            Tip: set up your Cash Flow first — then you can clone it as a starting point for any scenario.
+          </p>
+        )}
       </div>
     </div>
   )

@@ -4,9 +4,9 @@ import Link from 'next/link'
 import { getHouseholdById } from '@/app/actions/households'
 import { getScenario } from '@/app/actions/scenarios'
 import { getBudgetItems } from '@/app/actions/budgets'
-import { runProjection, budgetItemsToScenarioItems } from '@/lib/scenarios/projection-engine'
+import { budgetItemsToScenarioItems } from '@/lib/scenarios/projection-engine'
 import { formatCurrency } from '@/lib/currency'
-import ScenarioProjectionChart from '@/components/scenarios/ScenarioProjectionChart'
+import ScenarioProjectionSection from '@/components/scenarios/ScenarioProjectionSection'
 import ScenarioItemRow from '@/components/scenarios/ScenarioItemRow'
 import AddScenarioItemForm from '@/components/scenarios/AddScenarioItemForm'
 import ArchiveScenarioButton from '@/components/scenarios/ArchiveScenarioButton'
@@ -43,28 +43,14 @@ export default async function ScenarioDetailPage({
   const monthlyNet = monthlyIncome - monthlyExpenses
   const annualNet = monthlyNet * 12
 
-  const projection = runProjection(items, 24)
-
-  // Current budget projection for comparison
-  const budgetProjectionItems = budgetItems
-    ? budgetItemsToScenarioItems(budgetItems).map((b, idx) => ({
-        id: `budget-${idx}`,
-        scenario_id: '',
-        label: b.label,
-        category_type: b.category_type,
-        monthly_amount: b.monthly_amount,
-        sort_order: idx,
-        created_at: '',
-        updated_at: '',
-      }))
-    : []
-  const budgetProjection = budgetProjectionItems.length > 0
-    ? runProjection(budgetProjectionItems, 24)
-    : undefined
-
   const savingsRate = monthlyIncome > 0
     ? Math.round((monthlyNet / monthlyIncome) * 100)
     : 0
+
+  // Budget items for comparison (pass minimal shape to client component)
+  const budgetProjectionItems = budgetItems
+    ? budgetItemsToScenarioItems(budgetItems)
+    : []
 
   return (
     <div className="space-y-6">
@@ -109,27 +95,13 @@ export default async function ScenarioDetailPage({
         </div>
       </div>
 
-      {/* Projection chart */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-5">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-sm font-semibold text-gray-700">24-Month Savings Projection</h3>
-          {savingsRate !== 0 && (
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${savingsRate >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-              {savingsRate}% savings rate
-            </span>
-          )}
-        </div>
-        {budgetProjection && (
-          <p className="text-xs text-gray-400 mb-3">
-            Blue = this scenario · Gray = your current budget
-          </p>
-        )}
-        <ScenarioProjectionChart
-          data={projection}
-          currency={currency}
-          compareData={budgetProjection}
-        />
-      </div>
+      {/* Interactive projection chart with year slider */}
+      <ScenarioProjectionSection
+        items={items}
+        currency={currency}
+        budgetItems={budgetProjectionItems.length > 0 ? budgetProjectionItems : undefined}
+        savingsRate={savingsRate}
+      />
 
       {/* Income + Expense editors */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

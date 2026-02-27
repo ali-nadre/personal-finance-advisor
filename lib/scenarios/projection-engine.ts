@@ -1,7 +1,12 @@
-import type { ScenarioItem, ProjectionMonth } from '@/types/database'
+import type { ProjectionMonth } from '@/types/database'
+
+export type ProjectionInput = {
+  category_type: 'income' | 'expense'
+  monthly_amount: number
+}
 
 export function runProjection(
-  items: ScenarioItem[],
+  items: ProjectionInput[],
   months: number = 24,
   startDate: Date = new Date()
 ): ProjectionMonth[] {

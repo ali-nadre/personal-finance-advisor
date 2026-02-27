@@ -67,14 +67,14 @@ export default async function DashboardPage() {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                   <h2 className="text-lg font-semibold text-gray-900 mb-2">Financial Health Score</h2>
                   <p className="text-gray-500 text-sm">
-                    Add budget items to your household to see your score.
+                    Add income and expenses to your Cash Flow to see your score.
                   </p>
                   {primaryHousehold && (
                     <Link
                       href={`/dashboard/households/${primaryHousehold.id}/budget`}
                       className="inline-block mt-3 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg font-semibold hover:bg-blue-700 transition"
                     >
-                      Set up budget
+                      Set up Cash Flow
                     </Link>
                   )}
                 </div>
@@ -132,7 +132,7 @@ export default async function DashboardPage() {
                     href={`/dashboard/households/${primaryHousehold.id}/budget`}
                     className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-2 py-1.5 transition"
                   >
-                    <span>📊</span> Budget
+                    <span>📊</span> Cash Flow
                   </Link>
                   <Link
                     href={`/dashboard/households/${primaryHousehold.id}/transactions`}
