@@ -33,7 +33,15 @@ export const CURRENCIES: { code: Currency; name: string; symbol: string }[] = [
   { code: 'DZD', name: 'Algerian Dinar', symbol: 'د.ج' },
 ]
 
-export function formatCurrency(amount: number, currencyCode: Currency = 'USD'): string {
+export function formatCurrency(amount: number, currencyCode: Currency = 'USD', compact = false): string {
+  if (compact) {
+    const symbol = CURRENCIES.find((c) => c.code === currencyCode)?.symbol ?? currencyCode
+    const abs = Math.abs(amount)
+    const sign = amount < 0 ? '-' : ''
+    if (abs >= 1_000_000) return `${sign}${symbol}${(abs / 1_000_000).toFixed(1)}M`
+    if (abs >= 1_000) return `${sign}${symbol}${(abs / 1_000).toFixed(1)}k`
+    return `${sign}${symbol}${abs.toFixed(0)}`
+  }
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currencyCode,

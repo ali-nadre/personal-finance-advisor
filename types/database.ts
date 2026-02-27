@@ -175,3 +175,52 @@ export interface BudgetVsActual {
   difference: number
   percentUsed: number
 }
+
+// Scenario types
+export interface Scenario {
+  id: string
+  household_id: string
+  name: string
+  description: string | null
+  created_by: string
+  is_archived: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface ScenarioItem {
+  id: string
+  scenario_id: string
+  label: string
+  category_type: CategoryType
+  monthly_amount: number
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ScenarioWithItems extends Scenario {
+  items: ScenarioItem[]
+}
+
+export interface CreateScenarioInput {
+  household_id: string
+  name: string
+  description?: string
+}
+
+export interface AddScenarioItemInput {
+  scenario_id: string
+  label: string
+  category_type: CategoryType
+  monthly_amount: number
+}
+
+export interface ProjectionMonth {
+  monthIndex: number
+  label: string
+  income: number
+  expenses: number
+  net: number
+  cumulativeSavings: number
+}
