@@ -28,7 +28,7 @@ export default async function HouseholdPage({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-blue-800 mb-3">
             Plan your income and expenses with budgets.
@@ -60,6 +60,17 @@ export default async function HouseholdPage({
             className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition"
           >
             Scenarios
+          </Link>
+        </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p className="text-amber-800 mb-3">
+            Set savings targets and track your progress.
+          </p>
+          <Link
+            href={`/dashboard/households/${id}/goals`}
+            className="inline-block px-6 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition"
+          >
+            Goals
           </Link>
         </div>
       </div>

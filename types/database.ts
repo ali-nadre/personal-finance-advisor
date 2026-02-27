@@ -224,3 +224,56 @@ export interface ProjectionMonth {
   net: number
   cumulativeSavings: number
 }
+
+// Goal types
+export type GoalType =
+  | 'savings'
+  | 'emergency_fund'
+  | 'debt_payoff'
+  | 'vacation'
+  | 'home_purchase'
+  | 'education'
+  | 'other'
+
+export interface FinancialGoal {
+  id: string
+  household_id: string
+  name: string
+  description: string | null
+  goal_type: GoalType
+  target_amount: number
+  current_amount: number
+  deadline: string | null
+  is_completed: boolean
+  is_archived: boolean
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface GoalContribution {
+  id: string
+  goal_id: string
+  amount: number
+  note: string | null
+  contributed_at: string
+  created_by: string
+  created_at: string
+}
+
+export interface CreateGoalInput {
+  household_id: string
+  name: string
+  description?: string
+  goal_type: GoalType
+  target_amount: number
+  current_amount?: number
+  deadline?: string
+}
+
+export interface AddContributionInput {
+  goal_id: string
+  amount: number
+  note?: string
+  contributed_at?: string
+}
