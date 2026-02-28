@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { signOut } from '@/app/actions/auth'
 import { getUserHouseholds } from '@/app/actions/households'
 import NavLinks from '@/components/dashboard/NavLinks'
+import NavControls from '@/components/dashboard/NavControls'
 import Link from 'next/link'
 
 export default async function DashboardLayout({
@@ -28,16 +29,16 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center gap-6">
             <Link href="/dashboard" className="flex-shrink-0">
               <div className="flex flex-col leading-tight">
-                <span className="text-lg font-bold text-gray-900 hover:text-blue-600 transition">
+                <span className="text-lg font-bold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition">
                   FinanceOS
                 </span>
-                <span className="text-xs text-gray-400 font-medium truncate max-w-[140px]">
+                <span className="text-xs text-gray-400 dark:text-gray-500 font-medium truncate max-w-[140px]">
                   {primaryHousehold.name}
                 </span>
               </div>
@@ -48,9 +49,10 @@ export default async function DashboardLayout({
             </div>
 
             <div className="flex items-center gap-3 flex-shrink-0">
+              <NavControls />
               <Link
                 href={`/dashboard/households/${primaryHousehold.id}`}
-                className="text-gray-400 hover:text-gray-700 transition"
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition"
                 title="Household settings & members"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,13 +64,13 @@ export default async function DashboardLayout({
                   />
                 </svg>
               </Link>
-              <span className="text-sm text-gray-500 hidden sm:block truncate max-w-[160px]">
+              <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block truncate max-w-[160px]">
                 {user.email}
               </span>
               <form action={signOut}>
                 <button
                   type="submit"
-                  className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
+                  className="px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
                 >
                   Sign out
                 </button>
