@@ -20,7 +20,7 @@ export default async function AdvisorPage({ params }: { params: Promise<{ id: st
 
   const { data: insights } = await getInsights(id)
 
-  const hasApiKey = !!process.env.ANTHROPIC_API_KEY
+  const hasApiKey = !!process.env.GOOGLE_AI_API_KEY
 
   return (
     <div className="space-y-6">
@@ -55,12 +55,12 @@ export default async function AdvisorPage({ params }: { params: Promise<{ id: st
               <p className="text-5xl mb-4">🤖</p>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Advisor (Pro)</h3>
               <p className="text-sm text-gray-500 mb-4 max-w-xs">
-                Chat with your personal AI financial advisor powered by Claude. Get personalized coaching based on your actual numbers.
+                Chat with your personal AI financial advisor powered by Gemini. Get personalized coaching based on your actual numbers.
               </p>
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-left w-full max-w-xs">
                 <p className="text-xs font-semibold text-gray-700 mb-1">To enable:</p>
                 <p className="text-xs text-gray-500 font-mono">
-                  ANTHROPIC_API_KEY=sk-ant-...
+                  GOOGLE_AI_API_KEY=...
                 </p>
                 <p className="text-xs text-gray-400 mt-1">Add to your .env.local file</p>
               </div>
