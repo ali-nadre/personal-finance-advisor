@@ -31,7 +31,7 @@ export async function chatWithAdvisor(
 ): Promise<AdvisorResponse> {
   const genAI = getClient()
   const model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.0-flash',
     systemInstruction: systemPrompt,
   })
 
@@ -52,7 +52,7 @@ export async function chatWithAdvisor(
 export async function generateInsights(systemPrompt: string): Promise<string> {
   const genAI = getClient()
   const model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.0-flash',
     systemInstruction: systemPrompt,
   })
 
