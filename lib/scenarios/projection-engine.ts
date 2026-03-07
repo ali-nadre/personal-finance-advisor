@@ -1,7 +1,7 @@
 import type { ProjectionMonth } from '@/types/database'
 
 export type ProjectionInput = {
-  category_type: 'income' | 'expense'
+  category_type: 'income' | 'expense' | 'savings'
   monthly_amount: number
 }
 
@@ -15,7 +15,7 @@ export function runProjection(
     .reduce((sum, i) => sum + i.monthly_amount, 0)
 
   const monthlyExpenses = items
-    .filter((i) => i.category_type === 'expense')
+    .filter((i) => i.category_type === 'expense' || i.category_type === 'savings')
     .reduce((sum, i) => sum + i.monthly_amount, 0)
 
   const monthlyNet = monthlyIncome - monthlyExpenses
@@ -43,7 +43,7 @@ export function runProjection(
 
 export function budgetItemsToScenarioItems(
   budgetItems: { category: { name: string; type: string }; amount: number; frequency: string }[]
-): { label: string; category_type: 'income' | 'expense'; monthly_amount: number }[] {
+): { label: string; category_type: 'income' | 'expense' | 'savings'; monthly_amount: number }[] {
   return budgetItems.map((item) => {
     let monthlyAmount = item.amount
     if (item.frequency === 'quarterly') monthlyAmount = item.amount / 3
@@ -51,7 +51,7 @@ export function budgetItemsToScenarioItems(
 
     return {
       label: item.category.name,
-      category_type: item.category.type as 'income' | 'expense',
+      category_type: item.category.type as 'income' | 'expense' | 'savings',
       monthly_amount: Math.round(monthlyAmount * 100) / 100,
     }
   })

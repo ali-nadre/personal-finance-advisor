@@ -8,7 +8,7 @@ import type { ScenarioItem } from '@/types/database'
 import type { Currency } from '@/types/database'
 
 interface BudgetItem {
-  category_type: 'income' | 'expense'
+  category_type: 'income' | 'expense' | 'savings'
   monthly_amount: number
 }
 
