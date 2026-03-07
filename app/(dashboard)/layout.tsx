@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { signOut } from '@/app/actions/auth'
-import { getUserHouseholds } from '@/app/actions/households'
+import { getUserHouseholds, processInvites } from '@/app/actions/households'
 import NavLinks from '@/components/dashboard/NavLinks'
 import NavControls from '@/components/dashboard/NavControls'
 import Link from 'next/link'
@@ -20,6 +20,9 @@ export default async function DashboardLayout({
   if (!user) {
     redirect('/login')
   }
+
+  // Convert any pending email invites into memberships on every login
+  await processInvites()
 
   const { data: households } = await getUserHouseholds()
   const primaryHousehold = households?.[0] ?? null

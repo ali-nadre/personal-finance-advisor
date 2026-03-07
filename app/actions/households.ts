@@ -169,40 +169,91 @@ export async function addMemberToHousehold(input: AddMemberInput) {
   const { user, error: ownerError } = await requireHouseholdOwner(input.household_id)
   if (ownerError || !user) return { error: ownerError || 'Not authenticated' }
 
+  const email = input.user_email?.trim().toLowerCase()
+  if (!email) return { error: 'Email is required' }
+
   const supabase = await createClient()
 
-  // Find user by email
-  const { data: invitedUser, error: userError } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', input.user_email)
-    .single()
-
-  if (userError || !invitedUser) {
-    return { error: 'User not found with that email' }
-  }
-
-  // Add member
-  const { data, error } = await supabase
-    .from('household_members')
+  // Create a pending invite — works whether or not the user has an account yet.
+  // When the invited user logs in, processInvites() auto-adds them.
+  const { error } = await supabase
+    .from('household_invites')
     .insert({
       household_id: input.household_id,
-      user_id: invitedUser.id,
-      permission: input.permission,
+      invited_email: email,
       invited_by: user.id,
+      permission: input.permission || 'write',
     })
-    .select()
-    .single()
 
   if (error) {
     if (error.code === '23505') {
-      return { error: 'User is already a member of this household' }
+      return { error: 'An invite for that email already exists' }
     }
-    return { error: error.message }
+    return { error: 'Failed to send invite' }
   }
 
   revalidatePath(`/dashboard/households/${input.household_id}`)
-  return { data }
+  return { data: { invited_email: email } }
+}
+
+export async function getPendingInvites(householdId: string) {
+  const { error: ownerError } = await requireHouseholdOwner(householdId)
+  if (ownerError) return { data: null, error: ownerError }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('household_invites')
+    .select('id, invited_email, permission, created_at')
+    .eq('household_id', householdId)
+    .order('created_at', { ascending: false })
+
+  if (error) return { data: null, error: 'Failed to fetch invites' }
+  return { data, error: null }
+}
+
+export async function cancelInvite(inviteId: string) {
+  const supabase = await createClient()
+
+  const { data: invite } = await supabase
+    .from('household_invites')
+    .select('household_id')
+    .eq('id', inviteId)
+    .single()
+
+  if (!invite) return { error: 'Invite not found' }
+
+  const { error: ownerError } = await requireHouseholdOwner(invite.household_id)
+  if (ownerError) return { error: ownerError }
+
+  const { error } = await supabase
+    .from('household_invites')
+    .delete()
+    .eq('id', inviteId)
+
+  if (error) return { error: 'Failed to cancel invite' }
+
+  revalidatePath(`/dashboard/households/${invite.household_id}`)
+  return { success: true }
+}
+
+/**
+ * Call this after login/signup to convert any pending invites into memberships.
+ * Uses the process_pending_invites() SECURITY DEFINER function in Postgres.
+ */
+export async function processInvites() {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) return { processed: 0 }
+
+  const { data, error } = await supabase
+    .rpc('process_pending_invites', {
+      user_email: user.email,
+      user_uuid: user.id,
+    })
+
+  if (error) return { processed: 0 }
+  return { processed: data as number }
 }
 
 export async function updateMemberPermission(input: UpdateMemberPermissionInput) {
