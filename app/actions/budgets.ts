@@ -273,11 +273,12 @@ export async function deleteBudgetItem(itemId: string) {
 export interface BudgetSummary {
   totalIncome: number
   totalExpense: number
+  totalSavings: number
   balance: number
   byCategory: {
     categoryId: string
     categoryName: string
-    categoryType: 'income' | 'expense'
+    categoryType: 'income' | 'expense' | 'savings'
     total: number
   }[]
 }
@@ -291,7 +292,8 @@ export async function getBudgetSummary(householdId: string, year: number): Promi
 
   let totalIncome = 0
   let totalExpense = 0
-  const categoryTotals = new Map<string, { name: string; type: 'income' | 'expense'; total: number }>()
+  let totalSavings = 0
+  const categoryTotals = new Map<string, { name: string; type: 'income' | 'expense' | 'savings'; total: number }>()
 
   items.forEach((item) => {
     let annualAmount = item.amount
@@ -303,6 +305,8 @@ export async function getBudgetSummary(householdId: string, year: number): Promi
 
     if (item.category.type === 'income') {
       totalIncome += annualAmount
+    } else if (item.category.type === 'savings') {
+      totalSavings += annualAmount
     } else {
       totalExpense += annualAmount
     }
@@ -330,7 +334,8 @@ export async function getBudgetSummary(householdId: string, year: number): Promi
     data: {
       totalIncome,
       totalExpense,
-      balance: totalIncome - totalExpense,
+      totalSavings,
+      balance: totalIncome - totalExpense - totalSavings,
       byCategory,
     },
     error: null,

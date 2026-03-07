@@ -29,10 +29,20 @@ export const PREDEFINED_EXPENSES = [
   'Childcare',
   'Gym',
   'Travel',
-  'Savings',
   'Gifts',
   'Personal Care',
   'Home Maintenance',
   'Pets',
   'Other',
+]
+
+export const PREDEFINED_SAVINGS = [
+  'Emergency Fund',
+  'Retirement',
+  'Vacation Fund',
+  'Investments',
+  'Home Down Payment',
+  'Education Fund',
+  'New Car',
+  'Other Savings',
 ]

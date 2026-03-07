@@ -17,8 +17,10 @@ export default function BudgetItemList({ items, categories, householdId, currenc
 
   const incomeItems = items.filter((item) => item.category.type === 'income')
   const expenseItems = items.filter((item) => item.category.type === 'expense')
+  const savingsItems = items.filter((item) => item.category.type === 'savings')
   const incomeCategories = categories.filter((c) => c.type === 'income')
   const expenseCategories = categories.filter((c) => c.type === 'expense')
+  const savingsCategories = categories.filter((c) => c.type === 'savings')
 
   const renderSection = (
     itemsList: BudgetItemWithCategory[],
@@ -55,6 +57,7 @@ export default function BudgetItemList({ items, categories, householdId, currenc
     <div className="space-y-6">
       {renderSection(incomeItems, incomeCategories, t('income'), 'bg-green-50 dark:bg-green-900/20', t('noIncomeItems'))}
       {renderSection(expenseItems, expenseCategories, t('expenses'), 'bg-red-50 dark:bg-red-900/20', t('noExpenseItems'))}
+      {renderSection(savingsItems, savingsCategories, t('savings'), 'bg-purple-50 dark:bg-purple-900/20', t('noSavingsItems'))}
     </div>
   )
 }

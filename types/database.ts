@@ -57,7 +57,7 @@ export interface UpdateMemberPermissionInput {
 }
 
 // Budget types
-export type CategoryType = 'income' | 'expense'
+export type CategoryType = 'income' | 'expense' | 'savings'
 export type Frequency = 'monthly' | 'quarterly' | 'yearly'
 
 export interface Category {

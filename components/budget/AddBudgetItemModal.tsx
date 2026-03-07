@@ -58,6 +58,7 @@ export default function AddBudgetItemModal({ householdId, categories, onClose }:
 
   const incomeCategories = categories.filter((c) => c.type === 'income')
   const expenseCategories = categories.filter((c) => c.type === 'expense')
+  const savingsCategories = categories.filter((c) => c.type === 'savings')
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -104,6 +105,15 @@ export default function AddBudgetItemModal({ householdId, categories, onClose }:
               {expenseCategories.length > 0 && (
                 <optgroup label="Expenses">
                   {expenseCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {savingsCategories.length > 0 && (
+                <optgroup label="Savings">
+                  {savingsCategories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
                     </option>

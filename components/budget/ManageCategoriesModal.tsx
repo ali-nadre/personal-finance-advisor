@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCategories, createCategory, deleteCategory } from '@/app/actions/budgets'
 import type { Category, CategoryType } from '@/types/database'
-import { PREDEFINED_INCOME, PREDEFINED_EXPENSES } from '@/lib/budget/predefinedCategories'
+import { PREDEFINED_INCOME, PREDEFINED_EXPENSES, PREDEFINED_SAVINGS } from '@/lib/budget/predefinedCategories'
 
 interface Props {
   householdId: string
@@ -91,9 +91,11 @@ export default function ManageCategoriesModal({ householdId, onClose }: Props) {
   const existingNames = new Set(categories.map((c) => c.name.toLowerCase()))
   const incomeCategories = categories.filter((c) => c.type === 'income')
   const expenseCategories = categories.filter((c) => c.type === 'expense')
+  const savingsCategories = categories.filter((c) => c.type === 'savings')
 
   const unusedIncome = PREDEFINED_INCOME.filter((n) => !existingNames.has(n.toLowerCase()))
   const unusedExpenses = PREDEFINED_EXPENSES.filter((n) => !existingNames.has(n.toLowerCase()))
+  const unusedSavings = PREDEFINED_SAVINGS.filter((n) => !existingNames.has(n.toLowerCase()))
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -132,6 +134,7 @@ export default function ManageCategoriesModal({ householdId, onClose }: Props) {
             >
               <option value="income">Income</option>
               <option value="expense">Expense</option>
+              <option value="savings">Savings</option>
             </select>
             <button
               type="submit"
@@ -144,7 +147,7 @@ export default function ManageCategoriesModal({ householdId, onClose }: Props) {
         </div>
 
         {/* Predefined categories quick-add */}
-        {(unusedIncome.length > 0 || unusedExpenses.length > 0) && (
+        {(unusedIncome.length > 0 || unusedExpenses.length > 0 || unusedSavings.length > 0) && (
           <div className="mb-6 space-y-4">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm uppercase tracking-wide">
               Quick Add
@@ -178,6 +181,24 @@ export default function ManageCategoriesModal({ householdId, onClose }: Props) {
                       onClick={() => handleAddPreset(name, 'expense')}
                       disabled={addingPreset === name}
                       className="px-3 py-1 text-xs font-medium rounded-full border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition disabled:opacity-50"
+                    >
+                      {addingPreset === name ? '...' : `+ ${name}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {unusedSavings.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-purple-700 dark:text-purple-400 mb-2">Savings</p>
+                <div className="flex flex-wrap gap-2">
+                  {unusedSavings.map((name) => (
+                    <button
+                      key={name}
+                      onClick={() => handleAddPreset(name, 'savings')}
+                      disabled={addingPreset === name}
+                      className="px-3 py-1 text-xs font-medium rounded-full border border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition disabled:opacity-50"
                     >
                       {addingPreset === name ? '...' : `+ ${name}`}
                     </button>
@@ -231,6 +252,32 @@ export default function ManageCategoriesModal({ householdId, onClose }: Props) {
                     <div
                       key={cat.id}
                       className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-red-300 dark:hover:border-red-700 transition"
+                    >
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{cat.name}</span>
+                      <button
+                        onClick={() => handleDelete(cat.id, cat.name)}
+                        className="px-3 py-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 pb-2 border-b border-purple-200 dark:border-purple-800">
+                Savings ({savingsCategories.length})
+              </h3>
+              {savingsCategories.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400 text-sm">No savings categories yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {savingsCategories.map((cat) => (
+                    <div
+                      key={cat.id}
+                      className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-purple-300 dark:hover:border-purple-700 transition"
                     >
                       <span className="font-medium text-gray-900 dark:text-gray-100">{cat.name}</span>
                       <button

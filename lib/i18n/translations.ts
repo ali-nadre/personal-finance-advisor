@@ -28,8 +28,11 @@ export const translations = {
     perMonth: 'per month',
     perQuarter: 'per quarter',
     perYear: 'per year',
+    savings: 'Savings',
+    totalSavings: 'Total Savings',
     noIncomeItems: 'No income items yet.',
     noExpenseItems: 'No expense items yet.',
+    noSavingsItems: 'No savings items yet.',
     delete: 'Delete',
     deleting: 'Deleting...',
 
@@ -73,8 +76,11 @@ export const translations = {
     perMonth: 'par mois',
     perQuarter: 'par trimestre',
     perYear: 'par an',
+    savings: 'Épargne',
+    totalSavings: 'Épargne totale',
     noIncomeItems: "Aucun revenu pour l'instant.",
     noExpenseItems: "Aucune dépense pour l'instant.",
+    noSavingsItems: "Aucune épargne pour l'instant.",
     delete: 'Supprimer',
     deleting: 'Suppression...',
 
