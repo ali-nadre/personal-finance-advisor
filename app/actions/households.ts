@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireHouseholdOwner } from '@/lib/auth-guard'
 import { revalidatePath } from 'next/cache'
 import type {
   CreateHouseholdInput,
@@ -54,13 +55,22 @@ export async function getUserHouseholds(): Promise<{
     return { error: 'Not authenticated' }
   }
 
+  // Only return households the user created or is a member of
+  const { data: memberRows } = await supabase
+    .from('household_members')
+    .select('household_id')
+    .eq('user_id', user.id)
+
+  const memberHouseholdIds = (memberRows || []).map((m) => m.household_id)
+
   const { data, error } = await supabase
     .from('households')
     .select('*')
+    .or(`created_by.eq.${user.id}${memberHouseholdIds.length > 0 ? `,id.in.(${memberHouseholdIds.join(',')})` : ''}`)
     .order('created_at', { ascending: false })
 
   if (error) {
-    return { error: error.message }
+    return { error: 'Failed to fetch households' }
   }
 
   return { data: data || [] }
@@ -119,17 +129,11 @@ export async function getHouseholdById(
 }
 
 export async function updateHousehold(input: UpdateHouseholdInput) {
+  const { error: ownerError } = await requireHouseholdOwner(input.id)
+  if (ownerError) return { error: ownerError }
+
   const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const updateData: any = { name: input.name }
+  const updateData: Record<string, unknown> = { name: input.name.trim().slice(0, 200) }
   if (input.currency !== undefined) {
     updateData.currency = input.currency
   }
@@ -141,9 +145,7 @@ export async function updateHousehold(input: UpdateHouseholdInput) {
     .select()
     .single()
 
-  if (error) {
-    return { error: error.message }
-  }
+  if (error) return { error: 'Failed to update household' }
 
   revalidatePath('/dashboard')
   revalidatePath(`/dashboard/households/${input.id}`)
@@ -151,36 +153,23 @@ export async function updateHousehold(input: UpdateHouseholdInput) {
 }
 
 export async function deleteHousehold(householdId: string) {
+  const { error: ownerError } = await requireHouseholdOwner(householdId)
+  if (ownerError) return { error: ownerError }
+
   const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
-
   const { error } = await supabase.from('households').delete().eq('id', householdId)
 
-  if (error) {
-    return { error: error.message }
-  }
+  if (error) return { error: 'Failed to delete household' }
 
   revalidatePath('/dashboard')
   return { success: true }
 }
 
 export async function addMemberToHousehold(input: AddMemberInput) {
+  const { user, error: ownerError } = await requireHouseholdOwner(input.household_id)
+  if (ownerError || !user) return { error: ownerError || 'Not authenticated' }
+
   const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
 
   // Find user by email
   const { data: invitedUser, error: userError } = await supabase
@@ -219,13 +208,17 @@ export async function addMemberToHousehold(input: AddMemberInput) {
 export async function updateMemberPermission(input: UpdateMemberPermissionInput) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Look up which household this member belongs to, then verify ownership
+  const { data: memberRow } = await supabase
+    .from('household_members')
+    .select('household_id')
+    .eq('id', input.member_id)
+    .single()
 
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
+  if (!memberRow) return { error: 'Member not found' }
+
+  const { error: ownerError } = await requireHouseholdOwner(memberRow.household_id)
+  if (ownerError) return { error: ownerError }
 
   const { data, error } = await supabase
     .from('household_members')
@@ -245,26 +238,21 @@ export async function updateMemberPermission(input: UpdateMemberPermissionInput)
 export async function removeMemberFromHousehold(memberId: string) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
-
-  // Get member info to revalidate the correct path
+  // Get member info and verify ownership
   const { data: member } = await supabase
     .from('household_members')
     .select('household_id')
     .eq('id', memberId)
     .single()
 
+  if (!member) return { error: 'Member not found' }
+
+  const { error: ownerError } = await requireHouseholdOwner(member.household_id)
+  if (ownerError) return { error: ownerError }
+
   const { error } = await supabase.from('household_members').delete().eq('id', memberId)
 
-  if (error) {
-    return { error: error.message }
-  }
+  if (error) return { error: 'Failed to remove member' }
 
   if (member) {
     revalidatePath(`/dashboard/households/${member.household_id}`)

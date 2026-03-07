@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireAuth, requireHouseholdMember } from '@/lib/auth-guard'
 import type {
   Category,
   BudgetItem,
@@ -14,8 +15,10 @@ import type {
 // ============ CATEGORY ACTIONS ============
 
 export async function getCategories(householdId: string) {
-  const supabase = await createClient()
+  const { error: authError } = await requireHouseholdMember(householdId)
+  if (authError) return { data: null, error: authError }
 
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('categories')
     .select('*')
@@ -23,16 +26,15 @@ export async function getCategories(householdId: string) {
     .order('type', { ascending: true })
     .order('name', { ascending: true })
 
-  if (error) {
-    return { data: null, error: error.message }
-  }
-
+  if (error) return { data: null, error: 'Failed to fetch categories' }
   return { data: data as Category[], error: null }
 }
 
 export async function getCategoriesByType(householdId: string, type: 'income' | 'expense') {
-  const supabase = await createClient()
+  const { error: authError } = await requireHouseholdMember(householdId)
+  if (authError) return { data: null, error: authError }
 
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('categories')
     .select('*')
@@ -40,41 +42,49 @@ export async function getCategoriesByType(householdId: string, type: 'income' | 
     .eq('type', type)
     .order('name', { ascending: true })
 
-  if (error) {
-    return { data: null, error: error.message }
-  }
-
+  if (error) return { data: null, error: 'Failed to fetch categories' }
   return { data: data as Category[], error: null }
 }
 
 export async function createCategory(input: CreateCategoryInput) {
-  const supabase = await createClient()
+  const { error: authError } = await requireHouseholdMember(input.household_id)
+  if (authError) return { data: null, error: authError }
 
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('categories')
     .insert({
       household_id: input.household_id,
-      name: input.name,
+      name: input.name.trim().slice(0, 100),
       type: input.type,
       icon: input.icon || null,
     })
     .select()
     .single()
 
-  if (error) {
-    return { data: null, error: error.message }
-  }
-
+  if (error) return { data: null, error: 'Failed to create category' }
   return { data: data as Category, error: null }
 }
 
 export async function updateCategory(input: UpdateCategoryInput) {
+  const { error: authError } = await requireAuth()
+  if (authError) return { data: null, error: authError }
+
   const supabase = await createClient()
+  const { data: existing } = await supabase
+    .from('categories')
+    .select('household_id')
+    .eq('id', input.id)
+    .single()
 
-  const updateData: any = {
-    name: input.name,
+  if (!existing) return { data: null, error: 'Category not found' }
+
+  const { error: memberError } = await requireHouseholdMember(existing.household_id)
+  if (memberError) return { data: null, error: memberError }
+
+  const updateData: Record<string, unknown> = {
+    name: input.name.trim().slice(0, 100),
   }
-
   if (input.icon !== undefined) {
     updateData.icon = input.icon || null
   }
@@ -86,33 +96,42 @@ export async function updateCategory(input: UpdateCategoryInput) {
     .select()
     .single()
 
-  if (error) {
-    return { data: null, error: error.message }
-  }
-
+  if (error) return { data: null, error: 'Failed to update category' }
   return { data: data as Category, error: null }
 }
 
 export async function deleteCategory(categoryId: string) {
+  const { error: authError } = await requireAuth()
+  if (authError) return { error: authError }
+
   const supabase = await createClient()
+  const { data: existing } = await supabase
+    .from('categories')
+    .select('household_id')
+    .eq('id', categoryId)
+    .single()
+
+  if (!existing) return { error: 'Category not found' }
+
+  const { error: memberError } = await requireHouseholdMember(existing.household_id)
+  if (memberError) return { error: memberError }
 
   const { error } = await supabase
     .from('categories')
     .delete()
     .eq('id', categoryId)
 
-  if (error) {
-    return { error: error.message }
-  }
-
+  if (error) return { error: 'Failed to delete category' }
   return { error: null }
 }
 
 // ============ BUDGET ITEM ACTIONS ============
 
 export async function getBudgetItems(householdId: string, year?: number) {
-  const supabase = await createClient()
+  const { error: authError } = await requireHouseholdMember(householdId)
+  if (authError) return { data: null, error: authError }
 
+  const supabase = await createClient()
   let query = supabase
     .from('budget_items')
     .select(`
@@ -127,16 +146,15 @@ export async function getBudgetItems(householdId: string, year?: number) {
 
   const { data, error } = await query.order('created_at', { ascending: false })
 
-  if (error) {
-    return { data: null, error: error.message }
-  }
-
+  if (error) return { data: null, error: 'Failed to fetch budget items' }
   return { data: data as BudgetItemWithCategory[], error: null }
 }
 
 export async function getBudgetItemById(itemId: string) {
-  const supabase = await createClient()
+  const { error: authError } = await requireAuth()
+  if (authError) return { data: null, error: authError }
 
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('budget_items')
     .select(`
@@ -146,24 +164,23 @@ export async function getBudgetItemById(itemId: string) {
     .eq('id', itemId)
     .single()
 
-  if (error) {
-    return { data: null, error: error.message }
-  }
+  if (error) return { data: null, error: 'Budget item not found' }
+
+  const { error: memberError } = await requireHouseholdMember(data.household_id)
+  if (memberError) return { data: null, error: memberError }
 
   return { data: data as BudgetItemWithCategory, error: null }
 }
 
 export async function createBudgetItem(input: CreateBudgetItemInput) {
-  const supabase = await createClient()
+  const { user, error: authError } = await requireHouseholdMember(input.household_id)
+  if (authError || !user) return { data: null, error: authError || 'Not authenticated' }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { data: null, error: 'Not authenticated' }
+  if (!input.amount || input.amount <= 0 || input.amount > 999_999_999 || !isFinite(input.amount)) {
+    return { data: null, error: 'Invalid amount' }
   }
 
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('budget_items')
     .insert({
@@ -172,7 +189,7 @@ export async function createBudgetItem(input: CreateBudgetItemInput) {
       amount: input.amount,
       frequency: input.frequency,
       year: input.year,
-      description: input.description || null,
+      description: input.description?.trim().slice(0, 500) || null,
       created_by: user.id,
     })
     .select(`
@@ -181,23 +198,36 @@ export async function createBudgetItem(input: CreateBudgetItemInput) {
     `)
     .single()
 
-  if (error) {
-    return { data: null, error: error.message }
-  }
-
+  if (error) return { data: null, error: 'Failed to create budget item' }
   return { data: data as BudgetItemWithCategory, error: null }
 }
 
 export async function updateBudgetItem(input: UpdateBudgetItemInput) {
+  const { error: authError } = await requireAuth()
+  if (authError) return { data: null, error: authError }
+
+  if (input.amount !== undefined && (input.amount <= 0 || input.amount > 999_999_999 || !isFinite(input.amount))) {
+    return { data: null, error: 'Invalid amount' }
+  }
+
   const supabase = await createClient()
+  const { data: existing } = await supabase
+    .from('budget_items')
+    .select('household_id')
+    .eq('id', input.id)
+    .single()
 
-  const updateData: any = {}
+  if (!existing) return { data: null, error: 'Budget item not found' }
 
+  const { error: memberError } = await requireHouseholdMember(existing.household_id)
+  if (memberError) return { data: null, error: memberError }
+
+  const updateData: Record<string, unknown> = {}
   if (input.category_id !== undefined) updateData.category_id = input.category_id
   if (input.amount !== undefined) updateData.amount = input.amount
   if (input.frequency !== undefined) updateData.frequency = input.frequency
   if (input.year !== undefined) updateData.year = input.year
-  if (input.description !== undefined) updateData.description = input.description || null
+  if (input.description !== undefined) updateData.description = input.description?.trim().slice(0, 500) || null
 
   const { data, error } = await supabase
     .from('budget_items')
@@ -209,25 +239,32 @@ export async function updateBudgetItem(input: UpdateBudgetItemInput) {
     `)
     .single()
 
-  if (error) {
-    return { data: null, error: error.message }
-  }
-
+  if (error) return { data: null, error: 'Failed to update budget item' }
   return { data: data as BudgetItemWithCategory, error: null }
 }
 
 export async function deleteBudgetItem(itemId: string) {
+  const { error: authError } = await requireAuth()
+  if (authError) return { error: authError }
+
   const supabase = await createClient()
+  const { data: existing } = await supabase
+    .from('budget_items')
+    .select('household_id')
+    .eq('id', itemId)
+    .single()
+
+  if (!existing) return { error: 'Budget item not found' }
+
+  const { error: memberError } = await requireHouseholdMember(existing.household_id)
+  if (memberError) return { error: memberError }
 
   const { error } = await supabase
     .from('budget_items')
     .delete()
     .eq('id', itemId)
 
-  if (error) {
-    return { error: error.message }
-  }
-
+  if (error) return { error: 'Failed to delete budget item' }
   return { error: null }
 }
 
@@ -257,7 +294,6 @@ export async function getBudgetSummary(householdId: string, year: number): Promi
   const categoryTotals = new Map<string, { name: string; type: 'income' | 'expense'; total: number }>()
 
   items.forEach((item) => {
-    // Calculate annual amount based on frequency
     let annualAmount = item.amount
     if (item.frequency === 'monthly') {
       annualAmount = item.amount * 12
@@ -265,14 +301,12 @@ export async function getBudgetSummary(householdId: string, year: number): Promi
       annualAmount = item.amount * 4
     }
 
-    // Add to totals
     if (item.category.type === 'income') {
       totalIncome += annualAmount
     } else {
       totalExpense += annualAmount
     }
 
-    // Track by category
     const existing = categoryTotals.get(item.category_id)
     if (existing) {
       existing.total += annualAmount

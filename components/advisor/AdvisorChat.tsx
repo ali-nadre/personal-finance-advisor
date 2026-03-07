@@ -153,7 +153,7 @@ export default function AdvisorChat({ householdId, initialConversationId }: Prop
           </button>
         </div>
         <p className="text-xs text-gray-400 mt-2 text-center">
-          Powered by Claude · Your data is never stored by Anthropic
+          Powered by Google Gemini · Your data stays private
         </p>
       </div>
     </div>

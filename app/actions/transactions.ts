@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireAuth, requireHouseholdMember } from '@/lib/auth-guard'
 import type {
   TransactionWithCategory,
   CreateTransactionInput,
@@ -16,8 +17,10 @@ export async function getTransactions(
   householdId: string,
   filters?: TransactionFilters
 ) {
-  const supabase = await createClient()
+  const { error: authError } = await requireHouseholdMember(householdId)
+  if (authError) return { data: null, error: authError }
 
+  const supabase = await createClient()
   let query = supabase
     .from('transactions')
     .select(`
@@ -41,16 +44,15 @@ export async function getTransactions(
 
   const { data, error } = await query.order('transaction_date', { ascending: false })
 
-  if (error) {
-    return { data: null, error: error.message }
-  }
-
+  if (error) return { data: null, error: 'Failed to fetch transactions' }
   return { data: data as TransactionWithCategory[], error: null }
 }
 
 export async function getTransactionById(transactionId: string) {
-  const supabase = await createClient()
+  const { error: authError } = await requireAuth()
+  if (authError) return { data: null, error: authError }
 
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('transactions')
     .select(`
@@ -60,24 +62,23 @@ export async function getTransactionById(transactionId: string) {
     .eq('id', transactionId)
     .single()
 
-  if (error) {
-    return { data: null, error: error.message }
-  }
+  if (error) return { data: null, error: 'Transaction not found' }
+
+  const { error: memberError } = await requireHouseholdMember(data.household_id)
+  if (memberError) return { data: null, error: memberError }
 
   return { data: data as TransactionWithCategory, error: null }
 }
 
 export async function createTransaction(input: CreateTransactionInput) {
-  const supabase = await createClient()
+  const { user, error: authError } = await requireHouseholdMember(input.household_id)
+  if (authError || !user) return { data: null, error: authError || 'Not authenticated' }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { data: null, error: 'Not authenticated' }
+  if (!input.amount || input.amount <= 0 || input.amount > 999_999_999 || !isFinite(input.amount)) {
+    return { data: null, error: 'Invalid amount' }
   }
 
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('transactions')
     .insert({
@@ -85,7 +86,7 @@ export async function createTransaction(input: CreateTransactionInput) {
       category_id: input.category_id,
       amount: input.amount,
       type: input.type,
-      description: input.description || null,
+      description: input.description?.trim().slice(0, 500) || null,
       transaction_date: input.transaction_date || new Date().toISOString().split('T')[0],
       is_recurring: input.is_recurring || false,
       recurring_item_id: input.recurring_item_id || null,
@@ -97,22 +98,35 @@ export async function createTransaction(input: CreateTransactionInput) {
     `)
     .single()
 
-  if (error) {
-    return { data: null, error: error.message }
-  }
-
+  if (error) return { data: null, error: 'Failed to create transaction' }
   return { data: data as TransactionWithCategory, error: null }
 }
 
 export async function updateTransaction(input: UpdateTransactionInput) {
+  const { error: authError } = await requireAuth()
+  if (authError) return { data: null, error: authError }
+
+  if (input.amount !== undefined && (input.amount <= 0 || input.amount > 999_999_999 || !isFinite(input.amount))) {
+    return { data: null, error: 'Invalid amount' }
+  }
+
   const supabase = await createClient()
+  const { data: existing } = await supabase
+    .from('transactions')
+    .select('household_id')
+    .eq('id', input.id)
+    .single()
+
+  if (!existing) return { data: null, error: 'Transaction not found' }
+
+  const { error: memberError } = await requireHouseholdMember(existing.household_id)
+  if (memberError) return { data: null, error: memberError }
 
   const updateData: Record<string, unknown> = {}
-
   if (input.category_id !== undefined) updateData.category_id = input.category_id
   if (input.amount !== undefined) updateData.amount = input.amount
   if (input.type !== undefined) updateData.type = input.type
-  if (input.description !== undefined) updateData.description = input.description || null
+  if (input.description !== undefined) updateData.description = input.description?.trim().slice(0, 500) || null
   if (input.transaction_date !== undefined) updateData.transaction_date = input.transaction_date
   if (input.is_recurring !== undefined) updateData.is_recurring = input.is_recurring
 
@@ -126,25 +140,32 @@ export async function updateTransaction(input: UpdateTransactionInput) {
     `)
     .single()
 
-  if (error) {
-    return { data: null, error: error.message }
-  }
-
+  if (error) return { data: null, error: 'Failed to update transaction' }
   return { data: data as TransactionWithCategory, error: null }
 }
 
 export async function deleteTransaction(transactionId: string) {
+  const { error: authError } = await requireAuth()
+  if (authError) return { error: authError }
+
   const supabase = await createClient()
+  const { data: existing } = await supabase
+    .from('transactions')
+    .select('household_id')
+    .eq('id', transactionId)
+    .single()
+
+  if (!existing) return { error: 'Transaction not found' }
+
+  const { error: memberError } = await requireHouseholdMember(existing.household_id)
+  if (memberError) return { error: memberError }
 
   const { error } = await supabase
     .from('transactions')
     .delete()
     .eq('id', transactionId)
 
-  if (error) {
-    return { error: error.message }
-  }
-
+  if (error) return { error: 'Failed to delete transaction' }
   return { error: null }
 }
 
@@ -155,16 +176,14 @@ export async function getBudgetVsActual(
   year: number,
   month: number
 ): Promise<{ data: BudgetVsActual[] | null; error: string | null }> {
-  // Get budget items for the year
   const { data: budgetItems, error: budgetError } = await getBudgetItems(householdId, year)
 
   if (budgetError || !budgetItems) {
     return { data: null, error: budgetError || 'Failed to fetch budget items' }
   }
 
-  // Get actual transactions for the month
   const startDate = `${year}-${String(month).padStart(2, '0')}-01`
-  const endDate = new Date(year, month, 0).toISOString().split('T')[0] // last day of month
+  const endDate = new Date(year, month, 0).toISOString().split('T')[0]
 
   const { data: transactions, error: txError } = await getTransactions(householdId, {
     date_from: startDate,
@@ -175,7 +194,6 @@ export async function getBudgetVsActual(
     return { data: null, error: txError }
   }
 
-  // Calculate monthly budget per category
   const categoryBudgets = new Map<string, { name: string; type: 'income' | 'expense'; monthly: number }>()
 
   budgetItems.forEach((item) => {
@@ -198,14 +216,12 @@ export async function getBudgetVsActual(
     }
   })
 
-  // Calculate actual spending per category
   const categoryActuals = new Map<string, number>()
   transactions?.forEach((tx) => {
     const existing = categoryActuals.get(tx.category_id) || 0
     categoryActuals.set(tx.category_id, existing + tx.amount)
   })
 
-  // Merge into BudgetVsActual results
   const allCategoryIds = new Set([
     ...categoryBudgets.keys(),
     ...categoryActuals.keys(),
@@ -218,7 +234,6 @@ export async function getBudgetVsActual(
     const actual = categoryActuals.get(categoryId) || 0
     const budgeted = budget?.monthly || 0
 
-    // For categories only in transactions but not budget, try to get name from transactions
     let categoryName = budget?.name || ''
     let categoryType: 'income' | 'expense' = budget?.type || 'expense'
 
@@ -241,7 +256,6 @@ export async function getBudgetVsActual(
     })
   })
 
-  // Sort: expenses first, then by percent used descending
   results.sort((a, b) => {
     if (a.categoryType !== b.categoryType) {
       return a.categoryType === 'expense' ? -1 : 1

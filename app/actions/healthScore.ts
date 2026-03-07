@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireHouseholdMember } from '@/lib/auth-guard'
 import { calculateHealthScore, type HealthScoreResult } from '@/lib/scoring/health-score'
 import { getBudgetSummary } from './budgets'
 import { getMonthlyTransactionSummary, getBudgetVsActual } from './transactions'
@@ -75,8 +76,10 @@ async function saveSnapshot(householdId: string, result: HealthScoreResult) {
 }
 
 export async function getScoreHistory(householdId: string) {
-  const supabase = await createClient()
+  const { error: authError } = await requireHouseholdMember(householdId)
+  if (authError) return { data: null, error: authError }
 
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('financial_health_snapshots')
     .select('score, calculated_at')
@@ -84,6 +87,6 @@ export async function getScoreHistory(householdId: string) {
     .order('calculated_at', { ascending: false })
     .limit(30)
 
-  if (error) return { data: null, error: error.message }
+  if (error) return { data: null, error: 'Failed to fetch score history' }
   return { data, error: null }
 }
