@@ -14,13 +14,13 @@ import type { Currency } from '@/types/database'
 interface CategoryData {
   categoryName: string
   total: number
-  categoryType: 'income' | 'expense'
+  categoryType: 'income' | 'expense' | 'savings'
 }
 
 interface Props {
   data: CategoryData[]
   currency?: Currency
-  type?: 'income' | 'expense'
+  type?: 'income' | 'expense' | 'savings'
   viewMode?: 'yearly' | 'monthly'
 }
 
