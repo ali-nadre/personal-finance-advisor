@@ -33,6 +33,7 @@ export default function CashFlowPageContent({
   const summaryLabels = {
     totalIncome: t('totalIncome'),
     totalExpenses: t('totalExpenses'),
+    totalSavings: t('totalSavings'),
     balance: t('balance'),
     projection: viewMode === 'monthly' ? t('monthlyAverage') : t('annualProjection'),
     surplus: t('surplus'),
