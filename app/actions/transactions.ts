@@ -194,7 +194,7 @@ export async function getBudgetVsActual(
     return { data: null, error: txError }
   }
 
-  const categoryBudgets = new Map<string, { name: string; type: 'income' | 'expense'; monthly: number }>()
+  const categoryBudgets = new Map<string, { name: string; type: 'income' | 'expense' | 'savings'; monthly: number }>()
 
   budgetItems.forEach((item) => {
     let monthlyAmount = item.amount
@@ -235,7 +235,7 @@ export async function getBudgetVsActual(
     const budgeted = budget?.monthly || 0
 
     let categoryName = budget?.name || ''
-    let categoryType: 'income' | 'expense' = budget?.type || 'expense'
+    let categoryType: 'income' | 'expense' | 'savings' = budget?.type || 'expense'
 
     if (!budget) {
       const tx = transactions?.find((t) => t.category_id === categoryId)
