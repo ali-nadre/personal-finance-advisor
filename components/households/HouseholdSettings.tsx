@@ -2,6 +2,13 @@
 
 import { useState } from 'react'
 import type { HouseholdWithMembers, Permission, Currency } from '@/types/database'
+
+type PendingInvite = {
+  id: string
+  invited_email: string
+  permission: Permission
+  created_at: string
+}
 import {
   updateHousehold,
   deleteHousehold,
@@ -9,6 +16,7 @@ import {
   removeMemberFromHousehold,
   updateMemberPermission,
   leaveHousehold,
+  cancelInvite,
 } from '@/app/actions/households'
 import { useRouter } from 'next/navigation'
 import { CURRENCIES } from '@/lib/currency'
@@ -16,9 +24,11 @@ import { CURRENCIES } from '@/lib/currency'
 export default function HouseholdSettings({
   household,
   currentUserId,
+  pendingInvites = [],
 }: {
   household: HouseholdWithMembers
   currentUserId: string
+  pendingInvites?: PendingInvite[]
 }) {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
@@ -68,7 +78,7 @@ export default function HouseholdSettings({
     if (result.error) {
       setError(result.error)
     } else {
-      setSuccess('Member added successfully!')
+      setSuccess('Invite sent!')
       setInviteEmail('')
       setTimeout(() => setSuccess(null), 3000)
     }
@@ -98,6 +108,19 @@ export default function HouseholdSettings({
       setError(result.error)
     } else {
       setSuccess('Permission updated!')
+      setTimeout(() => setSuccess(null), 3000)
+    }
+    setLoading(false)
+  }
+
+  async function handleCancelInvite(inviteId: string) {
+    setLoading(true)
+    const result = await cancelInvite(inviteId)
+
+    if (result.error) {
+      setError(result.error)
+    } else {
+      setSuccess('Invite cancelled.')
       setTimeout(() => setSuccess(null), 3000)
     }
     setLoading(false)
@@ -286,6 +309,35 @@ export default function HouseholdSettings({
               Invite
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Pending Invites */}
+      {isCreator && pendingInvites.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold mb-4">Pending Invites</h2>
+          <div className="space-y-3">
+            {pendingInvites.map((invite) => (
+              <div
+                key={invite.id}
+                className="flex items-center justify-between p-3 border border-yellow-200 bg-yellow-50 rounded-lg"
+              >
+                <div>
+                  <p className="font-medium text-gray-800">{invite.invited_email}</p>
+                  <p className="text-sm text-gray-500">
+                    {invite.permission === 'write' ? 'Can Edit' : 'Read Only'} · Awaiting signup
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleCancelInvite(invite.id)}
+                  disabled={loading}
+                  className="text-sm text-red-600 hover:text-red-800 disabled:opacity-50 px-3 py-1 border border-red-300 rounded hover:bg-red-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

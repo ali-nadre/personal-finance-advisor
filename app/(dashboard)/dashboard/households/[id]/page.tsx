@@ -1,4 +1,4 @@
-import { getHouseholdById } from '@/app/actions/households'
+import { getHouseholdById, getPendingInvites } from '@/app/actions/households'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -25,6 +25,9 @@ export default async function HouseholdPage({
   if (error || !household) {
     redirect('/dashboard')
   }
+
+  const isCreator = household.created_by === user.id
+  const { data: pendingInvites } = isCreator ? await getPendingInvites(id) : { data: [] }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -75,7 +78,11 @@ export default async function HouseholdPage({
         </div>
       </div>
 
-      <HouseholdSettings household={household} currentUserId={user.id} />
+      <HouseholdSettings
+        household={household}
+        currentUserId={user.id}
+        pendingInvites={pendingInvites ?? []}
+      />
     </div>
   )
 }
