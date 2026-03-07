@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getHouseholdById } from '@/app/actions/households'
 import { getBudgetItems, getCategories, getBudgetSummary } from '@/app/actions/budgets'
-import { getBudgetVsActual } from '@/app/actions/transactions'
 import AddBudgetItemButton from '@/components/budget/AddBudgetItemButton'
 import ManageCategoriesButton from '@/components/budget/ManageCategoriesButton'
 import CashFlowPageContent from '@/components/budget/CashFlowPageContent'
@@ -27,21 +26,16 @@ export default async function BudgetPage({ params }: { params: Promise<{ id: str
 
   const now = new Date()
   const currentYear = now.getFullYear()
-  const currentMonth = now.getMonth() + 1
 
   const [
     { data: budgetItems },
     { data: categories },
     { data: summary },
-    { data: budgetVsActual },
   ] = await Promise.all([
     getBudgetItems(id, currentYear),
     getCategories(id),
     getBudgetSummary(id, currentYear),
-    getBudgetVsActual(id, currentYear, currentMonth),
   ])
-
-  const monthName = now.toLocaleDateString('en-US', { month: 'long' })
 
   // No categories yet — show setup prompt
   if (!categories || categories.length === 0) {
@@ -77,10 +71,8 @@ export default async function BudgetPage({ params }: { params: Promise<{ id: str
           summary={summary}
           budgetItems={budgetItems || []}
           categories={categories}
-          budgetVsActual={budgetVsActual || []}
           currency={household.currency}
           householdId={id}
-          monthName={monthName}
           currentYear={currentYear}
           householdName={household.name}
         />

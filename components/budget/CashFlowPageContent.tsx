@@ -4,20 +4,16 @@ import { useState } from 'react'
 import { useLanguage } from '@/lib/i18n/context'
 import BudgetSummary from './BudgetSummary'
 import BudgetItemList from './BudgetItemList'
-import BudgetVsActualView from './BudgetVsActual'
 import SpendingByCategoryChart from '@/components/charts/SpendingByCategoryChart'
-import BudgetVsActualChart from '@/components/charts/BudgetVsActualChart'
 import type { BudgetSummary as BudgetSummaryType } from '@/app/actions/budgets'
-import type { BudgetItemWithCategory, Category, BudgetVsActual, Currency } from '@/types/database'
+import type { BudgetItemWithCategory, Category, Currency } from '@/types/database'
 
 interface Props {
   summary: BudgetSummaryType
   budgetItems: BudgetItemWithCategory[]
   categories: Category[]
-  budgetVsActual: BudgetVsActual[]
   currency: Currency
   householdId: string
-  monthName: string
   currentYear: number
   householdName: string
 }
@@ -26,10 +22,8 @@ export default function CashFlowPageContent({
   summary,
   budgetItems,
   categories,
-  budgetVsActual,
   currency,
   householdId,
-  monthName,
   currentYear,
   householdName,
 }: Props) {
@@ -88,32 +82,16 @@ export default function CashFlowPageContent({
 
       {/* Charts row */}
       {summary.byCategory.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
-              Expenses by Category ({viewMode === 'monthly' ? 'monthly' : 'annual'})
-            </h3>
-            <SpendingByCategoryChart
-              data={summary.byCategory}
-              currency={currency}
-              type="expense"
-            />
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-              Budget vs Actual — {monthName}
-            </h3>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">Blue = budgeted · Green = under · Red = over</p>
-            <BudgetVsActualChart data={budgetVsActual} currency={currency} />
-          </div>
-        </div>
-      )}
-
-      {/* Budget vs Actual progress bars */}
-      {budgetVsActual.length > 0 && (
-        <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{monthName} {currentYear}</p>
-          <BudgetVsActualView data={budgetVsActual} currency={currency} />
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+            Expenses by Category ({viewMode === 'monthly' ? 'monthly' : 'annual'})
+          </h3>
+          <SpendingByCategoryChart
+            data={summary.byCategory}
+            currency={currency}
+            type="expense"
+            viewMode={viewMode}
+          />
         </div>
       )}
 

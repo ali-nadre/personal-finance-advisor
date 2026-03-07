@@ -21,6 +21,7 @@ interface Props {
   data: CategoryData[]
   currency?: Currency
   type?: 'income' | 'expense'
+  viewMode?: 'yearly' | 'monthly'
 }
 
 const EXPENSE_COLORS = [
@@ -32,7 +33,7 @@ const INCOME_COLORS = [
   '#22c55e', '#14b8a6', '#3b82f6', '#8b5cf6', '#84cc16',
 ]
 
-export default function SpendingByCategoryChart({ data, currency = 'USD', type = 'expense' }: Props) {
+export default function SpendingByCategoryChart({ data, currency = 'USD', type = 'expense', viewMode = 'yearly' }: Props) {
   const filtered = data
     .filter((d) => d.categoryType === type && d.total > 0)
     .sort((a, b) => b.total - a.total)
@@ -47,12 +48,17 @@ export default function SpendingByCategoryChart({ data, currency = 'USD', type =
     )
   }
 
+  // totals in data are always yearly — divide by 12 for monthly view
+  const toDisplay = (yearlyTotal: number) =>
+    viewMode === 'monthly' ? yearlyTotal / 12 : yearlyTotal
+  const perLabel = viewMode === 'monthly' ? '/mo' : '/yr'
+
   const chartData = filtered.map((d) => ({
     name: d.categoryName,
-    value: d.total,
+    value: toDisplay(d.total),
   }))
 
-  const total = filtered.reduce((s, d) => s + d.total, 0)
+  const total = chartData.reduce((s, d) => s + d.value, 0)
 
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number }> }) => {
     if (!active || !payload?.length) return null
@@ -60,7 +66,7 @@ export default function SpendingByCategoryChart({ data, currency = 'USD', type =
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow p-3 text-sm">
         <p className="font-semibold text-gray-900">{item.name}</p>
-        <p className="text-gray-600">{formatCurrency(item.value, currency)}</p>
+        <p className="text-gray-600">{formatCurrency(item.value, currency)}{perLabel}</p>
         <p className="text-gray-400">{Math.round((item.value / total) * 100)}% of total</p>
       </div>
     )
@@ -102,8 +108,8 @@ export default function SpendingByCategoryChart({ data, currency = 'USD', type =
               <span className="text-gray-600 truncate max-w-[120px]">{d.categoryName}</span>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-gray-400">{Math.round((d.total / total) * 100)}%</span>
-              <span className="font-medium text-gray-700">{formatCurrency(d.total / 12, currency)}/mo</span>
+              <span className="text-gray-400">{Math.round((toDisplay(d.total) / total) * 100)}%</span>
+              <span className="font-medium text-gray-700">{formatCurrency(toDisplay(d.total), currency)}{perLabel}</span>
             </div>
           </div>
         ))}
