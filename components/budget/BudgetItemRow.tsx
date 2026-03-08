@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateBudgetItem, deleteBudgetItem } from '@/app/actions/budgets'
-import { formatCurrency } from '@/lib/currency'
+import { CURRENCIES, convertCurrency, formatCurrency } from '@/lib/currency'
 import { useLanguage } from '@/lib/i18n/context'
 import type { BudgetItemWithCategory, Category, Currency, Frequency } from '@/types/database'
 
@@ -35,7 +35,11 @@ export default function BudgetItemRow({ item, sameTypeCategories, currency, view
 
   const [categoryId, setCategoryId] = useState(item.category_id)
   const [amount, setAmount] = useState(String(item.amount))
+  const [inputCurrency, setInputCurrency] = useState<Currency>(currency)
   const [frequency, setFrequency] = useState<Frequency>(item.frequency)
+
+  const [convertedAmount, setConvertedAmount] = useState<number | null>(null)
+  const [converting, setConverting] = useState(false)
 
   const amountRef = useRef<HTMLInputElement>(null)
 
@@ -43,26 +47,42 @@ export default function BudgetItemRow({ item, sameTypeCategories, currency, view
     if (editing) amountRef.current?.focus()
   }, [editing])
 
+  // Live conversion preview
+  useEffect(() => {
+    if (!editing) return
+    const parsed = parseFloat(amount)
+    if (!parsed || inputCurrency === currency) { setConvertedAmount(null); return }
+    let cancelled = false
+    setConverting(true)
+    convertCurrency(parsed, inputCurrency, currency).then((result) => {
+      if (!cancelled) { setConvertedAmount(result); setConverting(false) }
+    })
+    return () => { cancelled = true }
+  }, [amount, inputCurrency, currency, editing])
+
   function handleCancel() {
     setCategoryId(item.category_id)
     setAmount(String(item.amount))
+    setInputCurrency(currency)
     setFrequency(item.frequency)
+    setConvertedAmount(null)
     setEditing(false)
   }
 
   async function handleSave() {
     const parsed = parseFloat(amount)
-    if (isNaN(parsed) || parsed <= 0) {
-      handleCancel()
-      return
+    if (isNaN(parsed) || parsed <= 0) { handleCancel(); return }
+
+    let finalAmount = parsed
+    if (inputCurrency !== currency) {
+      setSaving(true)
+      const converted = await convertCurrency(parsed, inputCurrency, currency)
+      if (converted === null) { setSaving(false); return }
+      finalAmount = Math.round(converted * 100) / 100
     }
+
     setSaving(true)
-    await updateBudgetItem({
-      id: item.id,
-      category_id: categoryId,
-      amount: parsed,
-      frequency,
-    })
+    await updateBudgetItem({ id: item.id, category_id: categoryId, amount: finalAmount, frequency })
     setSaving(false)
     setEditing(false)
     router.refresh()
@@ -80,54 +100,78 @@ export default function BudgetItemRow({ item, sameTypeCategories, currency, view
 
   if (editing) {
     return (
-      <div className="flex flex-wrap items-center gap-2 p-3 border border-blue-300 dark:border-blue-600 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-        {/* Category select */}
-        <select
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          className="flex-1 min-w-[140px] border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-        >
-          {sameTypeCategories.map((cat) => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </select>
+      <div className="flex flex-col gap-2 p-3 border border-blue-300 dark:border-blue-600 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Category select */}
+          <select
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            className="flex-1 min-w-[140px] border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            {sameTypeCategories.map((cat) => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
 
-        {/* Amount */}
-        <input
-          ref={amountRef}
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel() }}
-          min="0.01"
-          step="0.01"
-          className="w-28 border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-        />
+          {/* Input currency */}
+          <select
+            value={inputCurrency}
+            onChange={(e) => setInputCurrency(e.target.value as Currency)}
+            className="w-24 border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            {CURRENCIES.map((c) => (
+              <option key={c.code} value={c.code}>{c.code}</option>
+            ))}
+          </select>
 
-        {/* Frequency */}
-        <select
-          value={frequency}
-          onChange={(e) => setFrequency(e.target.value as Frequency)}
-          className="border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-        >
-          <option value="monthly">Monthly</option>
-          <option value="quarterly">Quarterly</option>
-          <option value="yearly">Yearly</option>
-        </select>
+          {/* Amount */}
+          <input
+            ref={amountRef}
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel() }}
+            min="0.01"
+            step="0.01"
+            className="w-28 border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+          />
 
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
-        >
-          {saving ? '...' : 'Save'}
-        </button>
-        <button
-          onClick={handleCancel}
-          className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-xs rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-        >
-          Cancel
-        </button>
+          {/* Frequency */}
+          <select
+            value={frequency}
+            onChange={(e) => setFrequency(e.target.value as Frequency)}
+            className="border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
+          >
+            {saving ? '...' : 'Save'}
+          </button>
+          <button
+            onClick={handleCancel}
+            className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-xs rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          >
+            Cancel
+          </button>
+        </div>
+
+        {/* Conversion preview */}
+        {inputCurrency !== currency && amount && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+            {converting
+              ? 'Converting...'
+              : convertedAmount !== null
+              ? `≈ ${formatCurrency(convertedAmount, currency)} (saved in ${currency})`
+              : 'Could not fetch rate — save will be skipped'}
+          </p>
+        )}
       </div>
     )
   }

@@ -101,7 +101,9 @@ function CategoryGroup({
 
 export default function BudgetItemList({ items, categories, householdId: _householdId, currency = 'USD', viewMode = 'yearly' }: Props) {
   const { t } = useLanguage()
-  const [globalOpen, setGlobalOpen] = useState(true)
+  const [incomeOpen, setIncomeOpen] = useState(true)
+  const [expenseOpen, setExpenseOpen] = useState(true)
+  const [savingsOpen, setSavingsOpen] = useState(true)
 
   const incomeItems = items.filter((item) => item.category.type === 'income')
   const expenseItems = items.filter((item) => item.category.type === 'expense')
@@ -129,13 +131,24 @@ export default function BudgetItemList({ items, categories, householdId: _househ
     title: string,
     colorClass: string,
     emptyMsg: string,
-    sectionId: string
+    sectionId: string,
+    sectionOpen: boolean,
+    setSectionOpen: (v: boolean) => void,
   ) => {
     const groups = groupByCategory(sectionItems)
     return (
       <div id={sectionId} className="bg-white dark:bg-gray-800 rounded-lg shadow scroll-mt-20">
-        <div className={`px-6 py-4 border-b border-gray-200 dark:border-gray-700 ${colorClass}`}>
+        <div className={`px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 ${colorClass} flex items-center justify-between`}>
           <h2 className="text-xl font-semibold dark:text-gray-100">{title}</h2>
+          {sectionItems.length > 0 && (
+            <button
+              onClick={() => setSectionOpen(!sectionOpen)}
+              className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition"
+            >
+              <Chevron open={sectionOpen} />
+              {sectionOpen ? 'Collapse all' : 'Expand all'}
+            </button>
+          )}
         </div>
         <div className="p-4 sm:p-6">
           {sectionItems.length === 0 ? (
@@ -151,7 +164,7 @@ export default function BudgetItemList({ items, categories, householdId: _househ
                   sameTypeCategories={sameTypeCategories}
                   currency={currency}
                   viewMode={viewMode}
-                  globalOpen={globalOpen}
+                  globalOpen={sectionOpen}
                 />
               ))}
             </div>
@@ -164,29 +177,18 @@ export default function BudgetItemList({ items, categories, householdId: _househ
   if (items.length === 0) {
     return (
       <div className="space-y-6">
-        {renderSection([], incomeCategories, t('income'), 'bg-green-50 dark:bg-green-900/20', t('noIncomeItems'), 'budget-section-income')}
-        {renderSection([], expenseCategories, t('expenses'), 'bg-red-50 dark:bg-red-900/20', t('noExpenseItems'), 'budget-section-expense')}
-        {renderSection([], savingsCategories, t('savings'), 'bg-purple-50 dark:bg-purple-900/20', t('noSavingsItems'), 'budget-section-savings')}
+        {renderSection([], incomeCategories, t('income'), 'bg-green-50 dark:bg-green-900/20', t('noIncomeItems'), 'budget-section-income', incomeOpen, setIncomeOpen)}
+        {renderSection([], expenseCategories, t('expenses'), 'bg-red-50 dark:bg-red-900/20', t('noExpenseItems'), 'budget-section-expense', expenseOpen, setExpenseOpen)}
+        {renderSection([], savingsCategories, t('savings'), 'bg-purple-50 dark:bg-purple-900/20', t('noSavingsItems'), 'budget-section-savings', savingsOpen, setSavingsOpen)}
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Global collapse/expand toggle */}
-      <div className="flex justify-end">
-        <button
-          onClick={() => setGlobalOpen((v) => !v)}
-          className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition"
-        >
-          <Chevron open={globalOpen} />
-          {globalOpen ? 'Collapse all' : 'Expand all'}
-        </button>
-      </div>
-
-      {renderSection(incomeItems, incomeCategories, t('income'), 'bg-green-50 dark:bg-green-900/20', t('noIncomeItems'), 'budget-section-income')}
-      {renderSection(expenseItems, expenseCategories, t('expenses'), 'bg-red-50 dark:bg-red-900/20', t('noExpenseItems'), 'budget-section-expense')}
-      {renderSection(savingsItems, savingsCategories, t('savings'), 'bg-purple-50 dark:bg-purple-900/20', t('noSavingsItems'), 'budget-section-savings')}
+      {renderSection(incomeItems, incomeCategories, t('income'), 'bg-green-50 dark:bg-green-900/20', t('noIncomeItems'), 'budget-section-income', incomeOpen, setIncomeOpen)}
+      {renderSection(expenseItems, expenseCategories, t('expenses'), 'bg-red-50 dark:bg-red-900/20', t('noExpenseItems'), 'budget-section-expense', expenseOpen, setExpenseOpen)}
+      {renderSection(savingsItems, savingsCategories, t('savings'), 'bg-purple-50 dark:bg-purple-900/20', t('noSavingsItems'), 'budget-section-savings', savingsOpen, setSavingsOpen)}
     </div>
   )
 }

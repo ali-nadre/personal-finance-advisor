@@ -1,15 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import type { Category } from '@/types/database'
+import type { Category, Currency } from '@/types/database'
 import AddBudgetItemModal from './AddBudgetItemModal'
 
 interface Props {
   householdId: string
   categories: Category[]
+  currency: Currency
 }
 
-export default function AddBudgetItemButton({ householdId, categories }: Props) {
+export default function AddBudgetItemButton({ householdId, categories, currency }: Props) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -25,6 +26,7 @@ export default function AddBudgetItemButton({ householdId, categories }: Props) 
         <AddBudgetItemModal
           householdId={householdId}
           categories={categories}
+          currency={currency}
           onClose={() => setIsOpen(false)}
         />
       )}
