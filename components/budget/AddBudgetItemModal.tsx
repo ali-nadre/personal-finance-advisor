@@ -10,22 +10,21 @@ interface Props {
   householdId: string
   categories: Category[]
   currency: Currency
+  selectedYear: number
   onClose: () => void
 }
 
-export default function AddBudgetItemModal({ householdId, categories, currency, onClose }: Props) {
+export default function AddBudgetItemModal({ householdId, categories, currency, selectedYear, onClose }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  const currentYear = new Date().getFullYear()
 
   const [formData, setFormData] = useState({
     category_id: '',
     amount: '',
     inputCurrency: currency,
     frequency: 'monthly' as Frequency,
-    year: currentYear,
+    year: selectedYear,
     description: '',
   })
 

@@ -8,9 +8,10 @@ interface Props {
   householdId: string
   categories: Category[]
   currency: Currency
+  selectedYear: number
 }
 
-export default function AddBudgetItemButton({ householdId, categories, currency }: Props) {
+export default function AddBudgetItemButton({ householdId, categories, currency, selectedYear }: Props) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -27,6 +28,7 @@ export default function AddBudgetItemButton({ householdId, categories, currency 
           householdId={householdId}
           categories={categories}
           currency={currency}
+          selectedYear={selectedYear}
           onClose={() => setIsOpen(false)}
         />
       )}

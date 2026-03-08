@@ -72,7 +72,7 @@ export default async function BudgetPage({
       {/* Action buttons row */}
       <div className="flex justify-end gap-3">
         <ManageCategoriesButton householdId={id} />
-        <AddBudgetItemButton householdId={id} categories={categories} currency={household.currency} />
+        <AddBudgetItemButton householdId={id} categories={categories} currency={household.currency} selectedYear={selectedYear} />
       </div>
 
       <CashFlowPageContent
