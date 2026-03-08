@@ -161,7 +161,7 @@ export default function SpendingByCategoryChart({ data, currency = 'USD', type =
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                 style={{ backgroundColor: colors[i % colors.length] }}
               />
-              <span className="text-gray-600 dark:text-gray-400 truncate max-w-[120px] group-hover:text-gray-900 dark:group-hover:text-gray-100 transition">
+              <span className="text-gray-600 dark:text-gray-400 truncate group-hover:text-gray-900 dark:group-hover:text-gray-100 transition">
                 {d.categoryName}
               </span>
             </div>
