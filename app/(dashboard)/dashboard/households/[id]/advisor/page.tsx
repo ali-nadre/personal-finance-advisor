@@ -24,13 +24,13 @@ export default async function AdvisorPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Financial Advisor</h1>
-          <p className="text-gray-500 mt-1">{household.name}</p>
+          <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Financial Advisor</h1>
+          <p className="text-gray-500 mt-0.5 text-sm sm:text-base">{household.name}</p>
         </div>
         {hasApiKey && (
-          <span className="px-3 py-1 bg-purple-100 text-purple-700 text-sm font-semibold rounded-full">
+          <span className="px-3 py-1 bg-purple-100 text-purple-700 text-sm font-semibold rounded-full flex-shrink-0">
             Pro — AI Powered
           </span>
         )}
@@ -47,7 +47,7 @@ export default async function AdvisorPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Chat column */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" style={{ height: '600px' }}>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-[500px] sm:h-[600px]">
           {hasApiKey ? (
             <AdvisorChat householdId={id} />
           ) : (

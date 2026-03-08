@@ -4,6 +4,7 @@ import { signOut } from '@/app/actions/auth'
 import { getUserHouseholds, processInvites } from '@/app/actions/households'
 import NavLinks from '@/components/dashboard/NavLinks'
 import NavControls from '@/components/dashboard/NavControls'
+import BottomNav from '@/components/dashboard/BottomNav'
 import Link from 'next/link'
 
 export default async function DashboardLayout({
@@ -33,25 +34,26 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+      <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center gap-6">
+          <div className="flex justify-between h-14 md:h-16 items-center gap-4">
             <Link href="/dashboard" className="flex-shrink-0">
               <div className="flex flex-col leading-tight">
-                <span className="text-lg font-bold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition">
+                <span className="text-base md:text-lg font-bold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition">
                   FinanceOS
                 </span>
-                <span className="text-xs text-gray-400 dark:text-gray-500 font-medium truncate max-w-[140px]">
+                <span className="text-xs text-gray-400 dark:text-gray-500 font-medium truncate max-w-[120px] md:max-w-[140px]">
                   {primaryHousehold.name}
                 </span>
               </div>
             </Link>
 
-            <div className="flex-1 flex justify-center">
+            {/* Desktop nav links — hidden on mobile */}
+            <div className="hidden md:flex flex-1 justify-center">
               <NavLinks householdId={primaryHousehold.id} />
             </div>
 
-            <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <NavControls />
               <Link
                 href={`/dashboard/households/${primaryHousehold.id}`}
@@ -67,13 +69,13 @@ export default async function DashboardLayout({
                   />
                 </svg>
               </Link>
-              <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block truncate max-w-[160px]">
+              <span className="text-sm text-gray-500 dark:text-gray-400 hidden lg:block truncate max-w-[160px]">
                 {user.email}
               </span>
               <form action={signOut}>
                 <button
                   type="submit"
-                  className="px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                  className="px-2 md:px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
                 >
                   Sign out
                 </button>
@@ -82,9 +84,13 @@ export default async function DashboardLayout({
           </div>
         </div>
       </nav>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-8 pb-20 md:pb-8">
         {children}
       </main>
+
+      {/* Mobile bottom tab bar */}
+      <BottomNav householdId={primaryHousehold.id} />
     </div>
   )
 }

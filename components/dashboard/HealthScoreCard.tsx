@@ -21,7 +21,7 @@ export default function HealthScoreCard({ result }: Props) {
   const colors = gradeColors[result.grade]
 
   // SVG circle progress ring
-  const radius = 54
+  const radius = 50
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (result.total / 100) * circumference
 
@@ -37,18 +37,18 @@ export default function HealthScoreCard({ result }: Props) {
         </span>
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
         {/* Ring chart */}
         <div className="relative flex-shrink-0">
-          <svg width="128" height="128" className="-rotate-90">
+          <svg width="120" height="120" className="-rotate-90">
             <circle
-              cx="64" cy="64" r={radius}
+              cx="60" cy="60" r={radius}
               strokeWidth="10"
               fill="none"
               className="stroke-gray-100"
             />
             <circle
-              cx="64" cy="64" r={radius}
+              cx="60" cy="60" r={radius}
               strokeWidth="10"
               fill="none"
               strokeLinecap="round"
@@ -64,7 +64,7 @@ export default function HealthScoreCard({ result }: Props) {
         </div>
 
         {/* Mini pillar summary */}
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 w-full space-y-2">
           {[
             { label: 'Savings Rate', score: result.savingsRate.score, value: result.savingsRate.value },
             { label: 'Budget Adherence', score: result.budgetAdherence.score, value: result.budgetAdherence.value },

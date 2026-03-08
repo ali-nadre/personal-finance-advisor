@@ -45,10 +45,10 @@ export default function CashFlowPageContent({
       {/* Header with view toggle */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
             {t('cashFlow')}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">{householdName} · {currentYear}</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-0.5 text-sm sm:text-base">{householdName} · {currentYear}</p>
         </div>
         <div className="flex rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden text-sm font-semibold">
           <button

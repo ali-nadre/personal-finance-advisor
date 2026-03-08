@@ -51,15 +51,15 @@ export default function TransactionList({ transactions, categories, householdId,
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
           {(['all', 'expense', 'income'] as const).map((type) => (
             <button
               key={type}
               onClick={() => setFilterType(type)}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
                 filterType === type
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
               }`}
             >
               {type === 'all' ? 'All' : type === 'income' ? 'Income' : 'Expenses'}
@@ -70,7 +70,7 @@ export default function TransactionList({ transactions, categories, householdId,
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <option value="all">All Categories</option>
           {categories.map((cat) => (
@@ -79,18 +79,22 @@ export default function TransactionList({ transactions, categories, householdId,
             </option>
           ))}
         </select>
+      </div>
 
-        <div className="ml-auto flex gap-4 text-sm">
-          <span className="text-green-600 font-semibold">
-            Income: {formatCurrency(totalIncome, currency)}
-          </span>
-          <span className="text-red-600 font-semibold">
-            Expenses: {formatCurrency(totalExpense, currency)}
-          </span>
-          <span className={`font-bold ${totalIncome - totalExpense >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-            Net: {formatCurrency(totalIncome - totalExpense, currency)}
-          </span>
-        </div>
+      {/* Totals row — full width on mobile */}
+      <div className="flex gap-3 text-sm bg-white dark:bg-gray-800 rounded-lg px-4 py-3 shadow-sm border border-gray-100 dark:border-gray-700">
+        <span className="text-green-600 dark:text-green-400 font-semibold flex-1 text-center">
+          <span className="block text-xs text-gray-400 dark:text-gray-500 font-normal">Income</span>
+          {formatCurrency(totalIncome, currency)}
+        </span>
+        <span className="text-red-600 dark:text-red-400 font-semibold flex-1 text-center border-x border-gray-100 dark:border-gray-700">
+          <span className="block text-xs text-gray-400 dark:text-gray-500 font-normal">Expenses</span>
+          {formatCurrency(totalExpense, currency)}
+        </span>
+        <span className={`font-bold flex-1 text-center ${totalIncome - totalExpense >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+          <span className="block text-xs text-gray-400 dark:text-gray-500 font-normal">Net</span>
+          {formatCurrency(totalIncome - totalExpense, currency)}
+        </span>
       </div>
 
       {/* Transaction List */}

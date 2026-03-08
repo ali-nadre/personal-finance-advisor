@@ -46,19 +46,19 @@ export default async function TransactionsPage({ params }: { params: Promise<{ i
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Transactions - {household.name}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-3xl font-bold text-gray-900 truncate">
+            {household.name}
           </h1>
-          <p className="text-gray-600 mt-1">{monthName}</p>
+          <p className="text-gray-600 mt-0.5 text-sm sm:text-base">{monthName} · Transactions</p>
         </div>
         <AddTransactionButton householdId={id} categories={categories || []} />
       </div>
 
       {/* Monthly Summary Cards */}
       {monthlySummary && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <div className="bg-white rounded-lg shadow p-4">
             <p className="text-sm text-gray-500">Income</p>
             <p className="text-2xl font-bold text-green-600">
