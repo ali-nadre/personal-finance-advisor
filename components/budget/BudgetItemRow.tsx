@@ -99,32 +99,27 @@ export default function BudgetItemRow({ item, sameTypeCategories, currency, view
   const displayAmount = toViewAmount(item.amount, item.frequency, viewMode)
 
   if (editing) {
+    const fieldCls = "w-full border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
     return (
-      <div className="flex flex-col gap-2 p-3 border border-blue-300 dark:border-blue-600 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Category select */}
-          <select
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="flex-1 min-w-[140px] border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-          >
-            {sameTypeCategories.map((cat) => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
+      <div className="flex flex-col gap-3 p-3 border border-blue-300 dark:border-blue-600 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+        {/* Category — full width */}
+        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={fieldCls}>
+          {sameTypeCategories.map((cat) => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
+        </select>
 
-          {/* Input currency */}
+        {/* Currency + Amount side by side */}
+        <div className="flex gap-2">
           <select
             value={inputCurrency}
             onChange={(e) => setInputCurrency(e.target.value as Currency)}
-            className="w-24 border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-28 border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none flex-shrink-0"
           >
             {CURRENCIES.map((c) => (
               <option key={c.code} value={c.code}>{c.code}</option>
             ))}
           </select>
-
-          {/* Amount */}
           <input
             ref={amountRef}
             type="number"
@@ -133,38 +128,13 @@ export default function BudgetItemRow({ item, sameTypeCategories, currency, view
             onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel() }}
             min="0.01"
             step="0.01"
-            className="w-28 border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+            className="flex-1 border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
           />
-
-          {/* Frequency */}
-          <select
-            value={frequency}
-            onChange={(e) => setFrequency(e.target.value as Frequency)}
-            className="border border-blue-300 dark:border-blue-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-          >
-            <option value="monthly">Monthly</option>
-            <option value="quarterly">Quarterly</option>
-            <option value="yearly">Yearly</option>
-          </select>
-
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
-          >
-            {saving ? '...' : 'Save'}
-          </button>
-          <button
-            onClick={handleCancel}
-            className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-xs rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-          >
-            Cancel
-          </button>
         </div>
 
         {/* Conversion preview */}
         {inputCurrency !== currency && amount && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
             {converting
               ? 'Converting...'
               : convertedAmount !== null
@@ -172,6 +142,30 @@ export default function BudgetItemRow({ item, sameTypeCategories, currency, view
               : 'Could not fetch rate — save will be skipped'}
           </p>
         )}
+
+        {/* Frequency — full width */}
+        <select value={frequency} onChange={(e) => setFrequency(e.target.value as Frequency)} className={fieldCls}>
+          <option value="monthly">Monthly</option>
+          <option value="quarterly">Quarterly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+
+        {/* Save / Cancel — full width */}
+        <div className="flex gap-2">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
+          >
+            {saving ? 'Saving...' : 'Save'}
+          </button>
+          <button
+            onClick={handleCancel}
+            className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     )
   }
@@ -210,7 +204,7 @@ export default function BudgetItemRow({ item, sameTypeCategories, currency, view
 
         <button
           onClick={() => setEditing(true)}
-          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-500 transition text-xs px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-600 hover:border-blue-300"
+          className="sm:opacity-0 sm:group-hover:opacity-100 text-gray-400 hover:text-blue-500 transition text-xs px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-600 hover:border-blue-300"
         >
           edit
         </button>
@@ -218,7 +212,7 @@ export default function BudgetItemRow({ item, sameTypeCategories, currency, view
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition text-lg leading-none disabled:opacity-50"
+          className="sm:opacity-0 sm:group-hover:opacity-100 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition text-lg leading-none disabled:opacity-50"
           title="Delete"
         >
           ×
