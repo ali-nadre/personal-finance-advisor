@@ -5,13 +5,13 @@ import {
   Pie,
   Cell,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts'
 import { formatCurrency } from '@/lib/currency'
 import type { Currency } from '@/types/database'
 
 interface CategoryData {
+  categoryId: string
   categoryName: string
   total: number
   categoryType: 'income' | 'expense' | 'savings'
@@ -48,7 +48,6 @@ export default function SpendingByCategoryChart({ data, currency = 'USD', type =
     )
   }
 
-  // totals in data are always yearly — divide by 12 for monthly view
   const toDisplay = (yearlyTotal: number) =>
     viewMode === 'monthly' ? yearlyTotal / 12 : yearlyTotal
   const perLabel = viewMode === 'monthly' ? '/mo' : '/yr'
@@ -56,18 +55,27 @@ export default function SpendingByCategoryChart({ data, currency = 'USD', type =
   const chartData = filtered.map((d) => ({
     name: d.categoryName,
     value: toDisplay(d.total),
+    categoryId: d.categoryId,
   }))
 
   const total = chartData.reduce((s, d) => s + d.value, 0)
 
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number }> }) => {
+  const scrollToCategory = (categoryId: string) => {
+    document.getElementById(`budget-category-${categoryId}`)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }
+
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number; payload: { categoryId: string } }> }) => {
     if (!active || !payload?.length) return null
     const item = payload[0]
     return (
-      <div className="bg-white border border-gray-200 rounded-lg shadow p-3 text-sm">
-        <p className="font-semibold text-gray-900">{item.name}</p>
-        <p className="text-gray-600">{formatCurrency(item.value, currency)}{perLabel}</p>
-        <p className="text-gray-400">{Math.round((item.value / total) * 100)}% of total</p>
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow p-3 text-sm">
+        <p className="font-semibold text-gray-900 dark:text-gray-100">{item.name}</p>
+        <p className="text-gray-600 dark:text-gray-400">{formatCurrency(item.value, currency)}{perLabel}</p>
+        <p className="text-gray-400 dark:text-gray-500">{Math.round((item.value / total) * 100)}% of total</p>
+        <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">Click to view details ↓</p>
       </div>
     )
   }
@@ -84,34 +92,45 @@ export default function SpendingByCategoryChart({ data, currency = 'USD', type =
             outerRadius={100}
             paddingAngle={2}
             dataKey="value"
+            onClick={(entry) => scrollToCategory(entry.categoryId)}
+            style={{ cursor: 'pointer' }}
           >
-            {chartData.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+            {chartData.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={colors[index % colors.length]}
+                stroke="transparent"
+                className="hover:opacity-80 transition-opacity"
+                onClick={() => scrollToCategory(entry.categoryId)}
+              />
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />
-          <Legend
-            formatter={(value) => <span className="text-xs text-gray-600">{value}</span>}
-          />
         </PieChart>
       </ResponsiveContainer>
 
-      {/* Top categories list below chart */}
-      <div className="mt-2 space-y-1">
-        {filtered.slice(0, 4).map((d, i) => (
-          <div key={d.categoryName} className="flex items-center justify-between text-xs">
+      {/* Category legend — hidden on mobile */}
+      <div className="hidden sm:block mt-2 space-y-1">
+        {filtered.map((d, i) => (
+          <button
+            key={d.categoryId}
+            onClick={() => scrollToCategory(d.categoryId)}
+            className="w-full flex items-center justify-between text-xs hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-1 py-0.5 transition group"
+          >
             <div className="flex items-center gap-1.5">
               <div
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                 style={{ backgroundColor: colors[i % colors.length] }}
               />
-              <span className="text-gray-600 truncate max-w-[120px]">{d.categoryName}</span>
+              <span className="text-gray-600 dark:text-gray-400 truncate max-w-[120px] group-hover:text-gray-900 dark:group-hover:text-gray-100 transition">
+                {d.categoryName}
+              </span>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <span className="text-gray-400">{Math.round((toDisplay(d.total) / total) * 100)}%</span>
-              <span className="font-medium text-gray-700">{formatCurrency(toDisplay(d.total), currency)}{perLabel}</span>
+              <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(toDisplay(d.total), currency)}{perLabel}</span>
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>
