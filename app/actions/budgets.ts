@@ -341,3 +341,97 @@ export async function getBudgetSummary(householdId: string, year: number): Promi
     error: null,
   }
 }
+
+// ============ YEAR BALANCE ACTIONS ============
+
+export async function getYearBalance(householdId: string, year: number): Promise<{ data: number | null; error: string | null }> {
+  const { error: authError } = await requireHouseholdMember(householdId)
+  if (authError) return { data: null, error: authError }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('household_year_balances')
+    .select('beginning_balance')
+    .eq('household_id', householdId)
+    .eq('year', year)
+    .maybeSingle()
+
+  if (error) return { data: null, error: 'Failed to fetch year balance' }
+  return { data: data?.beginning_balance ?? null, error: null }
+}
+
+export async function upsertYearBalance(householdId: string, year: number, beginningBalance: number): Promise<{ error: string | null }> {
+  const { error: authError } = await requireHouseholdMember(householdId)
+  if (authError) return { error: authError }
+
+  if (!isFinite(beginningBalance) || Math.abs(beginningBalance) > 999_999_999_999) {
+    return { error: 'Invalid balance amount' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('household_year_balances')
+    .upsert(
+      { household_id: householdId, year, beginning_balance: beginningBalance, updated_at: new Date().toISOString() },
+      { onConflict: 'household_id,year' }
+    )
+
+  if (error) return { error: 'Failed to save year balance' }
+  return { error: null }
+}
+
+// ============ COPY BUDGET ITEMS ============
+
+export async function copyBudgetItems(
+  householdId: string,
+  itemIds: string[],
+  targetYear: number
+): Promise<{ copied: number; skipped: number; error: string | null }> {
+  const { user, error: authError } = await requireHouseholdMember(householdId)
+  if (authError || !user) return { copied: 0, skipped: 0, error: authError || 'Not authenticated' }
+
+  if (itemIds.length === 0) return { copied: 0, skipped: 0, error: null }
+
+  const supabase = await createClient()
+
+  // Fetch source items
+  const { data: sourceItems, error: fetchError } = await supabase
+    .from('budget_items')
+    .select('*')
+    .in('id', itemIds)
+    .eq('household_id', householdId)
+
+  if (fetchError || !sourceItems) return { copied: 0, skipped: 0, error: 'Failed to fetch source items' }
+
+  // Fetch existing items in target year to detect duplicates
+  const { data: existingItems } = await supabase
+    .from('budget_items')
+    .select('category_id, frequency, amount')
+    .eq('household_id', householdId)
+    .eq('year', targetYear)
+
+  const existingSet = new Set(
+    (existingItems ?? []).map((i) => `${i.category_id}|${i.frequency}|${i.amount}`)
+  )
+
+  const toInsert = sourceItems
+    .filter((item) => !existingSet.has(`${item.category_id}|${item.frequency}|${item.amount}`))
+    .map((item) => ({
+      household_id: householdId,
+      category_id: item.category_id,
+      amount: item.amount,
+      frequency: item.frequency,
+      year: targetYear,
+      description: item.description,
+      created_by: user.id,
+    }))
+
+  const skipped = sourceItems.length - toInsert.length
+
+  if (toInsert.length === 0) return { copied: 0, skipped, error: null }
+
+  const { error: insertError } = await supabase.from('budget_items').insert(toInsert)
+  if (insertError) return { copied: 0, skipped, error: 'Failed to copy items' }
+
+  return { copied: toInsert.length, skipped, error: null }
+}

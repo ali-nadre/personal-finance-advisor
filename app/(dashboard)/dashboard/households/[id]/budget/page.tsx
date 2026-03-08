@@ -1,13 +1,20 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getHouseholdById } from '@/app/actions/households'
-import { getBudgetItems, getCategories, getBudgetSummary } from '@/app/actions/budgets'
+import { getBudgetItems, getCategories, getBudgetSummary, getYearBalance } from '@/app/actions/budgets'
 import AddBudgetItemButton from '@/components/budget/AddBudgetItemButton'
 import ManageCategoriesButton from '@/components/budget/ManageCategoriesButton'
 import CashFlowPageContent from '@/components/budget/CashFlowPageContent'
 
-export default async function BudgetPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function BudgetPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ year?: string }>
+}) {
   const { id } = await params
+  const { year: yearParam } = await searchParams
   const supabase = await createClient()
 
   const {
@@ -24,17 +31,19 @@ export default async function BudgetPage({ params }: { params: Promise<{ id: str
     redirect('/dashboard')
   }
 
-  const now = new Date()
-  const currentYear = now.getFullYear()
+  const currentYear = new Date().getFullYear()
+  const selectedYear = yearParam ? Math.max(2000, Math.min(2100, parseInt(yearParam, 10))) || currentYear : currentYear
 
   const [
     { data: budgetItems },
     { data: categories },
     { data: summary },
+    { data: beginningBalance },
   ] = await Promise.all([
-    getBudgetItems(id, currentYear),
+    getBudgetItems(id, selectedYear),
     getCategories(id),
-    getBudgetSummary(id, currentYear),
+    getBudgetSummary(id, selectedYear),
+    getYearBalance(id, selectedYear),
   ])
 
   // No categories yet — show setup prompt
@@ -66,23 +75,17 @@ export default async function BudgetPage({ params }: { params: Promise<{ id: str
         <AddBudgetItemButton householdId={id} categories={categories} />
       </div>
 
-      {summary ? (
-        <CashFlowPageContent
-          summary={summary}
-          budgetItems={budgetItems || []}
-          categories={categories}
-          currency={household.currency}
-          householdId={id}
-          currentYear={currentYear}
-          householdName={household.name}
-        />
-      ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 text-center">
-          <p className="text-gray-500 dark:text-gray-400">
-            Add income and expense items to see your Cash Flow summary.
-          </p>
-        </div>
-      )}
+      <CashFlowPageContent
+        summary={summary}
+        budgetItems={budgetItems || []}
+        categories={categories}
+        currency={household.currency}
+        householdId={id}
+        selectedYear={selectedYear}
+        currentYear={currentYear}
+        householdName={household.name}
+        beginningBalance={beginningBalance ?? 0}
+      />
     </div>
   )
 }
