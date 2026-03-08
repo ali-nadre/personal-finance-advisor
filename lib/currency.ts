@@ -55,7 +55,8 @@ export function getCurrencySymbol(currencyCode: Currency): string {
   return currency?.symbol || currencyCode
 }
 
-// Frankfurter.app — free ECB-based exchange rates, no API key required.
+// cdn.jsdelivr.net/@fawazahmed0/currency-api — free CDN-cached rates, 150+ currencies
+// (covers MAD, NGN, KES and all other non-ECB currencies that frankfurter.app misses).
 // Returns the converted amount, or null if the request fails.
 export async function convertCurrency(
   amount: number,
@@ -64,13 +65,15 @@ export async function convertCurrency(
 ): Promise<number | null> {
   if (from === to) return amount
   try {
+    const fromLower = from.toLowerCase()
+    const toLower = to.toLowerCase()
     const res = await fetch(
-      `https://api.frankfurter.app/latest?from=${from}&to=${to}`,
-      { next: { revalidate: 3600 } }, // cache 1 h in Next.js
+      `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${fromLower}.json`,
+      { next: { revalidate: 3600 } },
     )
     if (!res.ok) return null
-    const json = await res.json() as { rates: Record<string, number> }
-    const rate = json.rates[to]
+    const json = await res.json() as Record<string, Record<string, number>>
+    const rate = json[fromLower]?.[toLower]
     if (!rate) return null
     return amount * rate
   } catch {
