@@ -27,9 +27,10 @@ export default function BudgetItemList({ items, categories, householdId, currenc
     sameTypeCategories: Category[],
     title: string,
     colorClass: string,
-    emptyMsg: string
+    emptyMsg: string,
+    sectionId: string
   ) => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+    <div id={sectionId} className="bg-white dark:bg-gray-800 rounded-lg shadow scroll-mt-20">
       <div className={`px-6 py-4 border-b border-gray-200 dark:border-gray-700 ${colorClass}`}>
         <h2 className="text-xl font-semibold dark:text-gray-100">{title}</h2>
       </div>
@@ -55,9 +56,9 @@ export default function BudgetItemList({ items, categories, householdId, currenc
 
   return (
     <div className="space-y-6">
-      {renderSection(incomeItems, incomeCategories, t('income'), 'bg-green-50 dark:bg-green-900/20', t('noIncomeItems'))}
-      {renderSection(expenseItems, expenseCategories, t('expenses'), 'bg-red-50 dark:bg-red-900/20', t('noExpenseItems'))}
-      {renderSection(savingsItems, savingsCategories, t('savings'), 'bg-purple-50 dark:bg-purple-900/20', t('noSavingsItems'))}
+      {renderSection(incomeItems, incomeCategories, t('income'), 'bg-green-50 dark:bg-green-900/20', t('noIncomeItems'), 'budget-section-income')}
+      {renderSection(expenseItems, expenseCategories, t('expenses'), 'bg-red-50 dark:bg-red-900/20', t('noExpenseItems'), 'budget-section-expense')}
+      {renderSection(savingsItems, savingsCategories, t('savings'), 'bg-purple-50 dark:bg-purple-900/20', t('noSavingsItems'), 'budget-section-savings')}
     </div>
   )
 }
