@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { BudgetItemWithCategory, Category, Currency } from '@/types/database'
 import { useLanguage } from '@/lib/i18n/context'
 import { formatCurrency } from '@/lib/currency'
@@ -20,6 +20,20 @@ function toAnnual(amount: number, frequency: string): number {
   return amount
 }
 
+// Subtle chevron icon
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${open ? 'rotate-90' : ''}`}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+    </svg>
+  )
+}
+
 function CategoryGroup({
   categoryId,
   categoryName,
@@ -27,6 +41,7 @@ function CategoryGroup({
   sameTypeCategories,
   currency,
   viewMode,
+  globalOpen,
 }: {
   categoryId: string
   categoryName: string
@@ -34,8 +49,12 @@ function CategoryGroup({
   sameTypeCategories: Category[]
   currency: Currency
   viewMode: 'yearly' | 'monthly'
+  globalOpen: boolean
 }) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(globalOpen)
+
+  // Sync when global toggle changes
+  useEffect(() => { setOpen(globalOpen) }, [globalOpen])
 
   const annualTotal = items.reduce((sum, item) => sum + toAnnual(item.amount, item.frequency), 0)
   const displayTotal = viewMode === 'monthly' ? annualTotal / 12 : annualTotal
@@ -46,27 +65,23 @@ function CategoryGroup({
       id={`budget-category-${categoryId}`}
       className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden scroll-mt-20"
     >
-      {/* Group header — click to collapse */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-left"
+        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700/40 hover:bg-gray-100 dark:hover:bg-gray-700/70 transition text-left"
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <span className={`transition-transform duration-200 text-gray-400 ${open ? 'rotate-90' : ''}`}>
-            ▶
-          </span>
-          <span className="font-semibold text-gray-800 dark:text-gray-100 truncate">{categoryName}</span>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Chevron open={open} />
+          <span className="font-medium text-gray-800 dark:text-gray-100 truncate">{categoryName}</span>
           <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
-            {items.length} {items.length === 1 ? 'item' : 'items'}
+            {items.length > 1 ? `${items.length} items` : ''}
           </span>
         </div>
-        <span className="font-bold text-gray-900 dark:text-gray-100 flex-shrink-0 ml-4">
+        <span className="font-semibold text-gray-700 dark:text-gray-200 flex-shrink-0 ml-4 text-sm">
           {formatCurrency(displayTotal, currency)}
           <span className="text-xs font-normal text-gray-400 dark:text-gray-500 ml-0.5">{perLabel}</span>
         </span>
       </button>
 
-      {/* Items */}
       {open && (
         <div className="p-3 space-y-2 bg-white dark:bg-gray-800">
           {items.map((item) => (
@@ -86,6 +101,7 @@ function CategoryGroup({
 
 export default function BudgetItemList({ items, categories, householdId: _householdId, currency = 'USD', viewMode = 'yearly' }: Props) {
   const { t } = useLanguage()
+  const [globalOpen, setGlobalOpen] = useState(true)
 
   const incomeItems = items.filter((item) => item.category.type === 'income')
   const expenseItems = items.filter((item) => item.category.type === 'expense')
@@ -94,7 +110,6 @@ export default function BudgetItemList({ items, categories, householdId: _househ
   const expenseCategories = categories.filter((c) => c.type === 'expense')
   const savingsCategories = categories.filter((c) => c.type === 'savings')
 
-  // Group items by category_id, preserving category order
   function groupByCategory(sectionItems: BudgetItemWithCategory[]): { categoryId: string; categoryName: string; items: BudgetItemWithCategory[] }[] {
     const map = new Map<string, { categoryId: string; categoryName: string; items: BudgetItemWithCategory[] }>()
     for (const item of sectionItems) {
@@ -136,6 +151,7 @@ export default function BudgetItemList({ items, categories, householdId: _househ
                   sameTypeCategories={sameTypeCategories}
                   currency={currency}
                   viewMode={viewMode}
+                  globalOpen={globalOpen}
                 />
               ))}
             </div>
@@ -145,8 +161,29 @@ export default function BudgetItemList({ items, categories, householdId: _househ
     )
   }
 
+  if (items.length === 0) {
+    return (
+      <div className="space-y-6">
+        {renderSection([], incomeCategories, t('income'), 'bg-green-50 dark:bg-green-900/20', t('noIncomeItems'), 'budget-section-income')}
+        {renderSection([], expenseCategories, t('expenses'), 'bg-red-50 dark:bg-red-900/20', t('noExpenseItems'), 'budget-section-expense')}
+        {renderSection([], savingsCategories, t('savings'), 'bg-purple-50 dark:bg-purple-900/20', t('noSavingsItems'), 'budget-section-savings')}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
+      {/* Global collapse/expand toggle */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setGlobalOpen((v) => !v)}
+          className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition"
+        >
+          <Chevron open={globalOpen} />
+          {globalOpen ? 'Collapse all' : 'Expand all'}
+        </button>
+      </div>
+
       {renderSection(incomeItems, incomeCategories, t('income'), 'bg-green-50 dark:bg-green-900/20', t('noIncomeItems'), 'budget-section-income')}
       {renderSection(expenseItems, expenseCategories, t('expenses'), 'bg-red-50 dark:bg-red-900/20', t('noExpenseItems'), 'budget-section-expense')}
       {renderSection(savingsItems, savingsCategories, t('savings'), 'bg-purple-50 dark:bg-purple-900/20', t('noSavingsItems'), 'budget-section-savings')}

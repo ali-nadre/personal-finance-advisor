@@ -33,6 +33,8 @@ const INCOME_COLORS = [
   '#22c55e', '#14b8a6', '#3b82f6', '#8b5cf6', '#84cc16',
 ]
 
+const RADIAN = Math.PI / 180
+
 export default function SpendingByCategoryChart({ data, currency = 'USD', type = 'expense', viewMode = 'yearly' }: Props) {
   const filtered = data
     .filter((d) => d.categoryType === type && d.total > 0)
@@ -67,7 +69,42 @@ export default function SpendingByCategoryChart({ data, currency = 'USD', type =
     })
   }
 
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number; payload: { categoryId: string } }> }) => {
+  // Custom label for top 5 slices — skip tiny slices (< 4%)
+  const renderLabel = ({
+    cx, cy, midAngle, outerRadius, percent, name, index,
+  }: {
+    cx?: number; cy?: number; midAngle?: number; outerRadius?: number
+    percent?: number; name?: string; index?: number
+  }) => {
+    if (index === undefined || index >= 5 || !percent || percent < 0.04) return null
+    if (cx === undefined || cy === undefined || midAngle === undefined || outerRadius === undefined || !name) return null
+
+    const radius = outerRadius + 22
+    const x = cx + radius * Math.cos(-midAngle * RADIAN)
+    const y = cy + radius * Math.sin(-midAngle * RADIAN)
+    const anchor = x > cx ? 'start' : 'end'
+
+    // Truncate long names
+    const label = name.length > 12 ? name.slice(0, 11) + '…' : name
+
+    return (
+      <text
+        x={x}
+        y={y}
+        textAnchor={anchor}
+        dominantBaseline="central"
+        style={{ fontSize: 11, fill: '#6b7280', fontWeight: 500 }}
+      >
+        {label}
+        <tspan style={{ fill: '#9ca3af', fontSize: 10 }}> {Math.round(percent * 100)}%</tspan>
+      </text>
+    )
+  }
+
+  const CustomTooltip = ({ active, payload }: {
+    active?: boolean
+    payload?: Array<{ name: string; value: number; payload: { categoryId: string } }>
+  }) => {
     if (!active || !payload?.length) return null
     const item = payload[0]
     return (
@@ -82,16 +119,18 @@ export default function SpendingByCategoryChart({ data, currency = 'USD', type =
 
   return (
     <div>
-      <ResponsiveContainer width="100%" height={260}>
+      <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
             data={chartData}
             cx="50%"
             cy="50%"
-            innerRadius={60}
-            outerRadius={100}
+            innerRadius={58}
+            outerRadius={90}
             paddingAngle={2}
             dataKey="value"
+            labelLine={false}
+            label={renderLabel}
             onClick={(entry) => scrollToCategory(entry.categoryId)}
             style={{ cursor: 'pointer' }}
           >
